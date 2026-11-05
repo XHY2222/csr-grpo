@@ -1,0 +1,16 @@
+# E1 gate: Switch vs Continue (+ gold DID control). CPU-toy defaults echo the
+# cluster protocol at a size that completes on a dev machine.
+method: dual_adapter
+reward_source: self
+stages_to_run: [1, 2]
+seed: 0
+model: {backend: toy, r_shared: 0, r_actor: 64, r_judge: 64}
+train: {group_size: 8, lr: 1.0e-5, degenerate_tau: 0.05}
+judge: {temperature: 0.0}
+data: {n_prompts_per_stage: 128, audit_prompts: 64, audit_pairs_per_prompt: 4}
+exp:
+  e1_seeds: 1
+  e1_gold_control_seeds: 1
+  delta_sesoi_pt: 2.0
+  matched_fpr: 0.05
+  bootstrap_resamples: 500

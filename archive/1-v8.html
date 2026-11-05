@@ -1,0 +1,806 @@
+<title>Judge-Policy Dual Drift · Paper Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* ── design tokens ─────────────────────────────────────────────────── */
+:root {
+  --bg:       #F3F5FA; --bg-r:   #FFFFFF; --bg-r2:  #EDF0F8;
+  --border:   #D8DFEE; --muted:  #68789A; --body:   #1A2340; --head:   #060E22;
+  --accent:   #1763C8; --accent-s: #EAF0FD;
+  --teal:     #0F8070; --teal-s:   #E5F5F2;
+  --purple:   #6B3FBF; --purple-s: #F0EAFB;
+  --amber:    #A86800; --amber-s:  #FEF3DA;
+  --red:      #BC1C25; --red-s:    #FDEAEA;
+  --green:    #15763E; --green-s:  #E4F5EC;
+  --warn:     #C07000;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#0B1220; --bg-r:#111E35; --bg-r2:#172540;
+    --border:#213050; --muted:#7A90BC; --body:#C5D4EE; --head:#E8F0FF;
+    --accent:#4D90F0; --accent-s:#0D1E3A;
+    --teal:#22B898; --teal-s:#0A2520;
+    --purple:#9B6DE8; --purple-s:#180E30;
+    --amber:#E0A030; --amber-s:#251800;
+    --red:#F26870; --red-s:#280808;
+    --green:#3EC87A; --green-s:#0A2018;
+    --warn:#E0A030;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#0B1220; --bg-r:#111E35; --bg-r2:#172540;
+  --border:#213050; --muted:#7A90BC; --body:#C5D4EE; --head:#E8F0FF;
+  --accent:#4D90F0; --accent-s:#0D1E3A;
+  --teal:#22B898; --teal-s:#0A2520;
+  --purple:#9B6DE8; --purple-s:#180E30;
+  --amber:#E0A030; --amber-s:#251800;
+  --red:#F26870; --red-s:#280808;
+  --green:#3EC87A; --green-s:#0A2018;
+  --warn:#E0A030;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--body);
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 15px; line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left,0px));
+  padding-right: max(16px, env(safe-area-inset-right,0px));
+  padding-block: 0;
+}
+code { font-family: 'JetBrains Mono', monospace; font-size: .82em;
+  background: var(--bg-r2); padding: 1px 5px; border-radius: 3px; color: var(--head); }
+.page { max-width: 980px; margin: 0 auto; padding-block: 44px 88px; }
+
+/* ── page header ── */
+.page-header { padding-bottom: 28px; border-bottom: 1px solid var(--border); margin-bottom: 44px; }
+.eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+.page-title { margin: 0 0 10px; font-size: clamp(20px,3.6vw,30px);
+  font-weight: 700; color: var(--head); line-height: 1.22; text-wrap: balance; }
+.page-sub { margin: 0 0 14px; color: var(--muted); font-size: 14px; max-width: 68ch; }
+.meta-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.meta-chip { font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--muted); background: var(--bg-r2); border: 1px solid var(--border);
+  padding: 2px 8px; border-radius: 4px; }
+
+/* ── section ── */
+.section { margin-bottom: 52px; }
+.section-title { font-size: 11px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border);
+  padding-bottom: 9px; margin: 0 0 20px; }
+
+/* ── paper identity box ── */
+.paper-id { background: var(--accent-s); border: 1px solid var(--accent);
+  border-radius: 12px; padding: 22px 24px; margin-bottom: 28px; }
+.paper-id h2 { margin: 0 0 6px; font-size: 18px; font-weight: 700; color: var(--head); line-height: 1.3; text-wrap: balance; }
+.paper-id .tagline { margin: 0 0 16px; font-size: 14px; color: var(--body); line-height: 1.6; }
+.claim-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.claim { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+  border: 1px solid var(--accent); color: var(--accent); background: transparent; }
+
+/* ── cards ── */
+.card { background: var(--bg-r); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; margin-bottom: 16px; }
+.card-head { padding: 18px 22px 14px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; gap: 12px; }
+.card-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.icon-teal   { background: var(--teal-s);   color: var(--teal); }
+.icon-purple { background: var(--purple-s); color: var(--purple); }
+.icon-amber  { background: var(--amber-s);  color: var(--amber); }
+.icon-accent { background: var(--accent-s); color: var(--accent); }
+.icon-green  { background: var(--green-s);  color: var(--green); }
+.card-head-text { flex: 1; min-width: 0; }
+.card-label { font-size: 10px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.card-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--head);
+  line-height: 1.3; text-wrap: balance; }
+.card-body { padding: 18px 22px; }
+.card-desc { margin: 0 0 16px; font-size: 13.5px; line-height: 1.65; color: var(--body); max-width: 72ch; }
+
+/* ── step list ── */
+.step-list { list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 10px; }
+.step-item { display: flex; gap: 12px; padding: 12px 14px;
+  background: var(--bg-r2); border-radius: 8px; align-items: flex-start; }
+.step-num { min-width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.step-text { font-size: 13px; line-height: 1.55; min-width: 0; }
+.step-text strong { color: var(--head); font-weight: 600; display: block; margin-bottom: 2px; }
+
+/* ── inline alert ── */
+.alert { display: flex; gap: 10px; padding: 11px 14px; border-radius: 8px;
+  font-size: 13px; line-height: 1.5; margin-top: 12px; align-items: flex-start; }
+.alert-warn { background: var(--amber-s); border: 1px solid var(--warn); }
+.alert-info { background: var(--accent-s); border: 1px solid var(--accent); }
+.alert-good { background: var(--green-s); border: 1px solid var(--green); }
+.alert-icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+.alert-body { min-width: 0; }
+.alert-body strong { color: var(--head); font-weight: 600; }
+
+/* ── stage stream table ── */
+.stage-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.stage-table th { text-align: left; font-size: 11px; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--muted);
+  padding: 9px 14px; border-bottom: 1px solid var(--border); }
+.stage-table td { padding: 12px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top; line-height: 1.5; }
+.stage-table tr:last-child td { border-bottom: none; }
+.stage-table tr:hover td { background: var(--bg-r2); }
+.stage-badge { display: inline-block; font-size: 11px; font-weight: 700;
+  padding: 2px 7px; border-radius: 4px; }
+.s1 { background: var(--purple-s); color: var(--purple); }
+.s2 { background: var(--teal-s);   color: var(--teal); }
+.s3 { background: var(--accent-s); color: var(--accent); }
+.s4 { background: var(--amber-s);  color: var(--amber); }
+
+/* ── pilot table ── */
+.pilot-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pilot-table th { text-align: left; font-size: 11px; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--muted);
+  padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.pilot-table td { padding: 10px 12px; border-bottom: 1px solid var(--border);
+  vertical-align: top; line-height: 1.5; }
+.pilot-table tr:last-child td { border-bottom: none; }
+.pilot-table tr:hover td { background: var(--bg-r2); }
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.hl-good { color: var(--green); font-weight: 600; }
+.hl-warn { color: var(--warn);  font-weight: 600; }
+.hl-bad  { color: var(--red);   font-weight: 600; }
+
+/* ── two-col grid ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 680px) { .two-col { grid-template-columns: 1fr; } }
+
+/* ── tag row ── */
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 12px; padding: 3px 10px; border-radius: 20px; border: 1px solid; }
+.tag-done { border-color: var(--green); color: var(--green); }
+.tag-open { border-color: var(--border); color: var(--muted); }
+
+/* ── action checklist ── */
+.checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.check-item { display: flex; gap: 10px; align-items: flex-start;
+  padding: 11px 14px; background: var(--bg-r); border: 1px solid var(--border); border-radius: 8px; }
+.check-item.urgent { border-color: var(--accent); background: var(--accent-s); }
+.check-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.dot-urgent { background: var(--accent); }
+.dot-mid    { background: var(--amber); }
+.dot-low    { background: var(--muted); }
+.check-text { font-size: 13px; line-height: 1.5; min-width: 0; }
+.check-text strong { color: var(--head); font-weight: 600; }
+
+/* ── ref grid ── */
+.ref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(275px, 1fr)); gap: 10px; }
+.ref-card { background: var(--bg-r); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 14px; }
+.ref-card a { color: var(--accent); font-weight: 600; font-size: 13px; text-decoration: none; }
+.ref-card a:hover { text-decoration: underline; }
+.ref-meta { font-size: 11px; color: var(--muted); margin: 3px 0; }
+.ref-role { font-size: 12px; color: var(--body); line-height: 1.5; margin-top: 4px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .card { transition: box-shadow .15s; }
+  .card:hover { box-shadow: 0 3px 16px rgba(0,0,0,.07); }
+}
+</style>
+
+<div class="page">
+
+<!-- ══ HEADER ══════════════════════════════════════════════════════ -->
+<header class="page-header">
+  <p class="eyebrow">8 × H800 · Continual Post-Training · Mechanism &amp; Diagnostic Protocol (v8 Final Synced)</p>
+  <h1 class="page-title">When Task Switching Corrupts Self-Reward: Snapshot Attribution &amp; Advantage Fidelity in Continual RL</h1>
+  <p class="page-sub">围绕<strong>"任务切换如何改变自奖励误差，以及这些误差何时开始损害真实策略更新"</strong>重构的机制与诊断研究蓝图。全篇统一落地 <strong>2×2 快照交叉评估（Snapshot Factorial Evaluation）</strong>、<strong>GRPO 优势保真度指标（<code>Acc_rank</code> + <code>Sign_agree</code> + <code>ρ_Adv</code> 含全对/全错退化组专门规约）</strong>、<strong>固定架构下的 Fisher-Mask vs. Random-Mask 对比（与独立基线 Dual-Adapter 解耦）</strong>、<strong>待验证的优势敏感度预警信号 <code>ΔÂ_canon</code></strong> 及完整对照/消融运行矩阵。</p>
+  <div class="meta-row">
+    <span class="meta-chip">目标：ICLR / ICML / NeurIPS（机制与诊断导向）</span>
+    <span class="meta-chip">模型：Qwen2.5-7B-Instruct + Llama-3.1-8B-Instruct</span>
+    <span class="meta-chip">核心定位：无训练期 Gold 验证器（Demo + 弱监督自举）</span>
+    <span class="meta-chip">全周期总算力：~2,400 H800·hrs (主表1,376h [核心897h+对照479h] + 8B复现254h + Pilot 410h + 消融360h ≈ 8卡 12.5 天)</span>
+  </div>
+</header>
+
+<!-- ══ PAPER IDENTITY ══════════════════════════════════════════════ -->
+<section class="section">
+  <h2 class="section-title">Paper 核心科学问题与精确 Framing</h2>
+  <div class="paper-id">
+    <h2>核心问题：跨阶段任务切换如何改变自奖励误差，以及这些误差何时真正损害 GRPO 策略更新？</h2>
+    <p class="tagline">
+      近期工作表明，在<strong>单任务静态分布</strong>下，自奖励 RL 存在策略—奖励共谋与坍缩，可通过奖励回放或慢速参考教师缓解（如 <em>Breaking the Self-Confirming Loop / RLER</em>、<em>Co-rewarding</em>、<em>M-GRPO</em>）；而在<strong>有外部 Gold 验证器的持续学习</strong>中，虽然单类任务内 RFT 比 SFT 更抗遗忘（RFT-CPT），但跨异质阶段依然存在显著干扰（如 <em>ACLArena</em> 中搜索任务从 45.2 降至 14.6）。
+      本文聚焦二者交汇的核心科学问题：<strong>当模型在无训练期 Gold 验证器（仅依赖阶段初少量未打分 Demo、人工领域扰动规则与模型生成弱监督）下经历跨阶段异质任务切换时，自奖励误差如何演化，且何时真正翻转或扭曲 GRPO 的更新方向？</strong>
+      我们构建具备事后确定性真值的受控科学实验台，建立一套<strong>2×2 快照交叉评估协议（精确剥离固定回答上的 Judge 漂移 vs. 固定 Judge 下的输出分布变化）</strong>与<strong>优势保真度诊断指标</strong>，系统比较参数解耦、历史对比重放与候选早停规则的真实边界。
+    </p>
+    <div class="claim-row">
+      <span class="claim">2×2 快照交叉评估 (E₀₀, E₀₁, E₁₀, E₁₁ 与非加性交互项 I_int)</span>
+      <span class="claim">优势保真度：Acc_rank + Sign_agree + ρ_Adv (含全对/全错组规约)</span>
+      <span class="claim">固定架构 Fisher-Mask vs. Random-Mask（与 Dual-Adapter 区分）</span>
+      <span class="claim">待验证优势敏感度预警信号 ΔÂ_canon vs. KL/熵/固定步数</span>
+      <span class="claim">独立审计集 P_audit（Pilot 仿真确定样本量，防选型泄漏）</span>
+      <span class="claim">完整运行矩阵：慢教师 / 静态混合 / 随机掩码 / 组件正交消融</span>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-head">
+        <span class="card-icon icon-accent">📚</span>
+        <div class="card-head-text">
+          <div class="card-label">文献谱系与诚实定位</div>
+          <h3 class="card-title">核实前沿单任务自奖励文献，精确界定"跨阶段"增量</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="step-list">
+          <li class="step-item">
+            <span class="step-num">①</span>
+            <div class="step-text"><strong>单任务自奖励稳定化：RLER (2510.08977) · Co-rewarding · M-GRPO</strong>正面讨论 <em>Breaking the Self-Confirming Loop</em>（分析策略—奖励耦合、错误过度奖励并提出 RLER）、<em>Co-rewarding</em>（跨视角一致性与慢更新参考教师）与 <em>M-GRPO</em>（动量模型与熵过滤）。明确本文不是重复发现单任务自确认循环，而是研究<strong>跨阶段任务切换引入的旧任务判别边界擦除与新任务冷启动耦合</strong>，并将慢更新教师/熵过滤纳入对比。</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">②</span>
+            <div class="step-text"><strong>持续后训练前提修正：RFT-CPT (2507.05386) &amp; ACLArena (2609.23989)</strong>修正笼统前提：RFT-CPT 证明在相近任务流且有完美外部验证器时 GRPO 优于 SFT；但 <strong>ACLArena 已报告跨异质阶段存在显著遗忘（如搜索任务从 45.2 降至 14.6）</strong>。因此本文研究的是<strong>"异质阶段切换固有干扰"与"自奖励信号失真"的复合放大机制</strong>（假设 <strong>H1</strong>）。</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">③</span>
+            <div class="step-text"><strong>PPG (Cobbe et al., arXiv:2009.04416) &amp; WARM (Ramé et al., 2401.12187)</strong>声明 Dual-Adapter 继承深度 RL 的 Phasic Policy Gradient 解耦思想；同时修正技术表述——<strong>明确 Dual-Adapter 与 Fisher-Masking 是两种不同的参数隔离架构</strong>，Fisher 掩码通过在共享分支上选择性屏蔽梯度（并辅以随机掩码对照）来控制可塑性分配，而非作为 Dual-Adapter 的一种特殊连续谱端点。</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">④</span>
+            <div class="step-text"><strong>Spurious Rewards (Shao et al., arXiv:2506.10947) &amp; Panickssery (2404.13076)</strong>引用 Qwen2.5 数学伪奖励现象（驱动双模型家族验证）与自偏好偏见，将监督边界诚实定义为：<strong>训练期不调用 Gold 验证器，依赖阶段初正确示范（Demo）、人工领域扰动规则与模型生成弱监督</strong>。</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-icon icon-teal">🎯</span>
+        <div class="card-head-text">
+          <div class="card-label">Problem Formulation · 连接奖励误差与真实 GRPO 梯度</div>
+          <h3 class="card-title">从单纯排序精度到 GRPO 优势保真度 &amp; 因果链闭环</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="step-list">
+          <li class="step-item">
+            <span class="step-num">F1</span>
+            <div class="step-text"><strong>为什么仅看 <code>Acc_rank</code> 仍不够？（GRPO 优势保真度指标与全对/全错退化组规约）</strong>GRPO 使用组内标准化奖励值 <code>Â_i = (r_i − μ_r)/σ_r</code>。反例：若真值为 <code>[1, 1, 0, 0]</code> 而 Judge 打分为 <code>[0.99, 0.60, 0.59, 0.58]</code>，虽然 <code>Acc_rank = 100%</code>，但均值为 <code>0.69</code>，第二个正确回答仍获得<strong>负优势（<code>Â_2 &lt; 0</code>）</strong>，收到错误方向的样本权重。因此我们在<strong>含正负混合样本的有效组（Informative Mixed Groups, <code>0 &lt; #correct &lt; G</code>，同时汇报其占比 <code>Valid-Pair Coverage</code>）</strong>上报告：
+              <br>• <strong>① 组内排序精度 <code>Acc_rank</code></strong>；
+              <br>• <strong>② 样本优势符号一致率 <code>Sign_agree</code></strong>：<code>P(sign(Â_i^J) == sign(Â_i^gold))</code>。注意：<code>Sign_agree</code> 描述单个样本的奖惩方向正误，尚不直接等同于整组加权后的参数梯度方向；为此我们在诊断批次上额外汇报<strong>组级参数梯度余弦相似度 <code>CosSim(g^J, g^gold)</code></strong>；
+              <br>• <strong>③ 标准化优势相关性 <code>ρ_Adv</code> / <code>MSE_Adv</code></strong>：<code>Corr(Â^J, Â^gold)</code>，衡量组内相对步长权重失真；
+              <br>• <strong>④ 全对或全错退化组（Degenerate Groups, <code>#correct ∈ {0, G}</code> 即 <code>σ_gold = 0</code>）的专门处理：</strong>当组内回答全对或全错时，Gold 优势恒为 0 且 <code>Acc_rank</code>、<code>ρ_Adv</code> 分母未定义（绝不强行填 0 混入均值），我们将其单独剥离并汇报 <strong>Judge 虚假分差标准差 <code>σ_J | (σ_gold = 0)</code></strong> 与<strong>伪对比触发率 <code>P(max r_i − min r_i &gt; τ | σ_gold = 0)</code></strong>，直接量化无真值差异时 Judge 制造虚假梯度噪声的程度。</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">F2</span>
+            <div class="step-text"><strong>待检验的机制中介假设（Mechanistic Mediation Hypothesis）：Judge 保真度如何影响旧任务遗忘 FM？</strong>保护 Judge 或提前终止训练为何可能降低 Actor 的跨阶段遗忘？我们将其明确表述为<strong>待实验检验的机制链假设</strong>而非先验定论：高保真奖励信号本身并不必然导致更小的策略 KL 散度（正确但高置信的奖励同样可驱动较大更新）；我们的核心假设是——<strong>失真或被迎合的 Judge 奖励会驱动 Actor 沿与真实任务正交或冲突的方向产生病态参数漂移</strong>。实验通过同步记录每阶段末的<strong>参数更新范数 <code>‖ΔW_A‖_F</code>、相对 <code>W₀</code> 的策略 KL 散度、以及旧任务激活子空间漂移与遗忘率 <code>FM</code> 的相关性</strong>，实证检验该机制链是否成立。</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">F3</span>
+            <div class="step-text"><strong>严防探针泄漏与统一采样口径：分离开发探针 <code>P_ext</code> 与独立盲审探针 <code>P_audit</code></strong>由于 Group D 与主表 Fisher-Mask 在 <code>P_ext</code> 上估计 Judge 的经验 Fisher 矩阵，<code>P_ext</code> 已参与训练决策。因此我们统一定义两套完全隔离的探针集：
+              <br>• <strong>开发与掩码探针 <code>P_ext</code>（固定 200 题 × 4 pairs/题 = 800 pairs）：</strong>仅用于经验 Fisher 估计与开发监控；
+              <br>• <strong>独立盲审探针 <code>P_audit</code>（每题固定 4 pairs，初始基数 200 题 = 800 pairs，最终独立题目数 <code>N_prompts</code> 由 Pilot 功效仿真确定）：</strong>完全不参与任何梯度掩码、超参选择或早停标定，专门用于最终指标汇报与 H4① 聚类鲁棒等价检验。</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CORE ARCHITECTURE ══════════════════════════════════════════ -->
+<section class="section">
+  <h2 class="section-title">核心归因设计（2×2 快照交叉评估）与修正后三组件架构（Section 2）</h2>
+
+  <!-- Conceptual Error Decomposition & 2x2 Snapshot Factorial -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-icon icon-accent">📐</span>
+      <div class="card-head-text">
+        <div class="card-label">2×2 Snapshot Factorial Attribution · 真正的双因素正交归因</div>
+        <h3 class="card-title">保存 Judge 与 Actor 快照交叉打分：精确分离"Judge 自身变化"与"输出分布变化"</h3>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">
+        <strong>修复三审指出的归因混杂：</strong>原 Group A–D 是四种训练配置而非双因素正交析因实验。我们在每个阶段训练中定期保存初始/当前 Judge 快照 <code>{θ_J^(t,0), θ_J^(t,k)}</code> 与初始/当前 Actor 在相同题目上生成的回答集 <code>{Y_0, Y_k}</code>，构建真正的 <strong>2×2 快照交叉评估表</strong>（其中 <code>E_ij</code> 表示用 Judge <code>i</code> 对回答集 <code>j</code> 评估的优势保真度误差，如 <code>1 − Acc_rank</code> 或 <code>1 − Sign_agree</code>）：
+      </p>
+      <div style="background:var(--bg-r2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--head);overflow-x:auto">
+        E_11 − E_00 &nbsp;≡&nbsp;
+        <span style="color:var(--purple);font-weight:700">(E_10 − E_00) [固定回答上的 Judge 漂移]</span> &nbsp;+&nbsp;
+        <span style="color:var(--amber);font-weight:700">(E_01 − E_00) [固定 Judge 面对输出分布变化的效应]</span> &nbsp;+&nbsp;
+        <span style="color:var(--teal);font-weight:700">I_int [非加性共演化交互项: E_11 − E_10 − E_01 + E_00]</span>
+      </div>
+      <ul class="step-list">
+        <li class="step-item">
+          <span class="step-num" style="background:var(--purple)">①</span>
+          <div class="step-text"><strong>主效应 1：<code>E_10 − E_00</code>（固定回答 <code>Y_0</code> 上的 Judge 变化 ↔ 跨角色参数污染）</strong>回答完全固定为初始 Actor 采样 <code>Y_0</code>，仅将裁判从 <code>θ_J^(t,0)</code> 替换为 <code>θ_J^(t,k)</code>。在 Dual-Adapter 下 <code>θ_J</code> 阶段内冻结，故该项严格等于 <code>0</code>；在共享 LoRA 下直接度量<strong>参数污染导致的裁判退化</strong>。</div>
+        </li>
+        <li class="step-item">
+          <span class="step-num" style="background:var(--amber)">②</span>
+          <div class="step-text"><strong>主效应 2：<code>E_01 − E_00</code>（固定 Judge <code>θ_J^(t,0)</code> 下的输出分布变化效应 + 受控改写敏感度探测）</strong>裁判固定为初始 <code>θ_J^(t,0)</code>，回答从 <code>Y_0</code> 变为 <code>Y_k</code>。<strong>严谨区分命名：</strong><code>E_01 − E_00</code> 总量统称为<strong>"输出分布变化效应（Output Distribution Shift Effect）"</strong>（因为 Actor 同时改变了内容正确率、错误类型、推理长度与表面文风，不能直接等同于格式迎合）。为进一步探查其中的表面形式敏感度分量，我们对 <code>Y_k</code> 施加<strong>受控改写干预（Controlled Canonicalization Probe）</strong>，度量固定题目与候选解集下的组内优势偏移 <code>ΔÂ_canon</code> 作为辅助证据。</div>
+        </li>
+        <li class="step-item">
+          <span class="step-num" style="background:var(--teal)">③</span>
+          <div class="step-text"><strong>非加性交互项 <code>I_int = E_11 − E_10 − E_01 + E_00</code>（Non-Additive Co-Evolution Interaction · 待检验假设）</strong>在数学定义上，<code>I_int</code> 度量 Judge 更新与 Actor 输出分布变化同时发生时的<strong>非加性交互效应</strong>（可能为正、零或负）。我们将其作为<strong>待检验的科学假设</strong>：仅当实验观测到共享参数下 <code>I_int &gt; 0</code> 显著大于零、且伴随当前 Judge 对当前 Actor 特定错误输出赋予系统性虚高优势时，才支持"策略—裁判共演化产生超加性恶化"的假设；不再先验将其直接命名为"共谋放大效应"。</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Component 1 & Corrected Fisher Parameterization -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-icon icon-purple">⚙️</span>
+      <div class="card-head-text">
+        <div class="card-label">Component 1 · Fixed-Architecture Fisher Masking vs. Dual-Adapter Disjoint Baseline</div>
+        <h3 class="card-title">彻底解耦"掩码率 m"与"共享秩分配 r_S"：固定架构对比 Fisher-Mask 与 Random-Mask，Dual-Adapter 另列独立基线</h3>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">
+        <strong>修复 Fisher 端点等价过度宣称：</strong>在混合架构 <code>r_S = 32, r_A^priv = 32</code> 下，当共享分支被 <code>m=100%</code> 完全冻结时，Actor 仅能更新私有的 <code>32</code> 秩，而独立 Dual-Adapter 的 Actor 可更新完整的 <code>64</code> 秩——<strong>两者的可训练容量仍然不同！</strong>此前的表述混淆了两个截然不同的控制变量：① <strong>掩码率 <code>m</code></strong>（在固定架构下限制多少共享参数被 Actor 更新）与 ② <strong>共享秩分配 <code>r_S</code></strong>（改变共享与私有容量的结构比例）。为此，我们彻底删去"同一连续谱精确收敛端点"的强主张，将二者严格分开设计：
+      </p>
+      <div class="two-col">
+        <div>
+          <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px">严格分离两类实验变量：固定架构掩码 vs. 完全解耦适配器</p>
+          <ul class="step-list">
+            <li class="step-item"><span class="step-num" style="background:var(--purple)">S</span><div class="step-text"><strong>变量分离：固定混合架构（<code>r_S=32, r_A^priv=32, r_J^priv=32</code>） vs. 独立 Dual-Adapter（<code>r_S=0, r_A^priv=64, r_J^priv=64</code>）</strong>在考察梯度掩码时，严格固定共享+私有架构 <code>(r_S=32, r_priv=32)</code>，仅在共享分支 <code>θ_S</code> 上变化掩码率 <code>m ∈ {0%, 25%, 50%, 75%, 100%}</code>（其中 <code>m=100%</code> 明确定义为"仅更新 32 秩私有分支的容量受限下界参考"，绝不等同于 64 秩 Dual-Adapter）。<strong>Dual-Adapter (<code>r_S=0, r_A=64, r_J=64</code>) 则作为完全无共享参数的独立结构基线单列评估</strong>。</div></li>
+            <li class="step-item"><span class="step-num" style="background:var(--purple)">R</span><div class="step-text"><strong>同架构、同比例的随机掩码对照（Random-Mask Control）</strong>在完全相同的固定架构 <code>(r_S=32, r_priv=32)</code> 下，对每个掩码率 <code>m ∈ {25%, 50%, 75%}</code> <strong>强制运行相同屏蔽比例的 Random-Mask 对照组</strong>。由于 Fisher-Mask 与 Random-Mask 在任意给定 <code>m</code> 下拥有<strong>完全一致的可训练参数量与容量上限</strong>，二者对比可严格检验"按 Judge Fisher 敏感度定向屏蔽"是否显著优于随机冻结同量共享坐标。</div></li>
+          </ul>
+        </div>
+        <div>
+          <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px">确定性 GenRM 接口与工程实现</p>
+          <ul class="step-list">
+            <li class="step-item"><span class="step-num" style="background:var(--accent)">G</span><div class="step-text"><strong>Greedy Rubric CoT + Logit 连续奖励</strong>Judge 采用 <code>temperature = 0</code> 生成简短判据（<code>≤ 192 tokens</code>）并以 <code>Verdict: [[Yes]] / [[No]]</code> 结尾，取最后一层 logit 差 <code>r(x,y) = σ(z_Yes − z_No) ∈ (0,1)</code>；在 Ablation 中对比 <code>Direct-Logit (0-CoT)</code>。</div></li>
+            <li class="step-item"><span class="step-num" style="background:var(--teal)">J</span><div class="step-text"><strong>针对 IFEval 计数类约束的原子分解提示（Atomic Rubric）</strong>针对三审指出"192 token CoT 对精确词数/字符数统计天然表现差"的问题，在 Stage 4 为 GenRM 提供<strong>逐条约束原子核查模板（先逐项列出约束条件并局部核对，再给总 Verdict）</strong>，并在 L3 单独汇报"计数型 vs. 语义格式型"子集的 Judge 天花板差异。</div></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Component 2: Replay Warm-up & Weak Supervision Audit -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-icon icon-teal">🌱</span>
+      <div class="card-head-text">
+        <div class="card-label">Component 2 · Replay-Grounded Contrastive Warm-up &amp; Weak-Label Quality Audit</div>
+        <h3 class="card-title">诚实界定弱监督边界：逐算子报告真实负例率 + 模糊样本软标签/弃权 + 聚类鲁棒 TOST</h3>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">
+        <strong>诚实界定"无训练期 Gold 验证器"边界：</strong>我们明确声明方法<strong>并非无任何外部监督的纯自举，而是依赖阶段初正确示范（150 条 Demo）、领域启发式破坏规则与模型自生成弱监督</strong>。针对"规则破坏未必翻转标签（如删冗余前提或数学中间步抵消）"与"5/8 多数派可能系统性犯错"的审稿质疑，增设三项质量控制：
+      </p>
+      <ul class="step-list">
+        <li class="step-item">
+          <span class="step-num">1</span>
+          <div class="step-text"><strong>路线 A（分域规则扰动 + 正负例对称 W₀ 改写 + 模糊样本弃权/软标签）</strong>正例 Demo 与规则扰动负例均以 1:1 经冻结 Base <code>W₀</code> 保持语义重写（消除改写痕迹 Shortcut）。<strong>【新增自检与弃权机制】：</strong>若规则修改后模型的最终结论/返回值/<code>oxed{}</code> 答案与原正例 Demo 仍然相同（说明改动未影响最终结果），则<strong>直接弃权丢弃该样本（Abstention）或赋予中性软标签 <code>y_soft = 0.5</code></strong>，绝不强行标为负例！在 L3 事后审计中<strong>按不同扰动算子分别报告真实负例率（True Negative Rate per Operator）</strong>。</div>
+        </li>
+        <li class="step-item">
+          <span class="step-num">2</span>
+          <div class="step-text"><strong>路线 B（≥5/8 共识门槛少数派 + 合成负例到真实 Actor 错误的跨分布迁移验证）</strong>采样 K=8 条 rollout，仅当最大一致簇 ≥ 5/8 时取少数派作负例（逐阶段报告产出率与事后真实错误率）。<strong>【新增跨分布迁移测试】：</strong>专门报告<strong>仅用路线 A 规则合成负例训练的 Judge，在真实 Actor 自然错误分布（On-policy Natural Errors）上的 <code>Acc_rank</code> 与 <code>Sign_agree</code></strong>，实证检验合成负例能否迁移覆盖真实策略错误。</div>
+        </li>
+        <li class="step-item">
+          <span class="step-num">3</span>
+          <div class="step-text"><strong>跨阶段对比池 Replay 与基于 Pilot 仿真的配对聚类 TOST（Simulation-Calibrated Cluster TOST）</strong>阶段 t 预热时按 1:1 混合重放阶段 <code>1…t−1</code> 的历史对比对。<strong>修复 H4① 统计功效设计（废除未经计算的 80% 功效断言）：</strong>在正态近似下，若前后判定不一致率 <code>p_d ≈ 10%</code> 且等价边界为 <code>δ = ±2.5%</code>，即便 800 个独立 pairs 的 TOST 功效也仅约 <strong>45%</strong>（达到 80% 功效约需 1,370 个独立 pairs，且题内相关性 <code>ICC = ρ_intra</code> 会进一步放大所需题目数 <code>DEFF = 1 + (m−1)ρ_intra</code>；Cluster Bootstrap 只能正确估计聚类标准误，不会凭空创造统计功效）。因此，我们统一規定每道独立题目固定构造 <code>m = 4</code> 个对比 pairs，并采用<strong>两阶段仿真定样本量协议</strong>：<strong>在 Pilot 阶段实测配对不一致率 <code>p̂_d</code> 与题内相关系数 <code>ρ̂_intra</code>，在预设实际意义等价边界（主设为 <code>δ = ±2.5%</code>，若单阶段题库容量受限则预注册 <code>δ = ±3.0%</code> 敏感度分析）下，通过 Parametric Cluster-Bootstrap 蒙特卡洛仿真确定达到 Power ≥ 80% 所需的独立题目数 <code>N_prompts</code>（例如当 <code>p̂_d ≈ 8%, ρ̂_intra ≈ 0.15</code> 时，扩充评测题库至 <code>N_prompts = 350–400</code> 题，即 <code>1,400–1,600 pairs</code>）</strong>，若某数据集可用测试题总数不足，则诚实汇报实际达到的统计功效与双侧 90% 聚类置信区间，绝不虚报功效！</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Component 3: Advantage-Shift Early Stopping -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-icon icon-amber">🔒</span>
+      <div class="card-head-text">
+        <div class="card-label">Component 3 · Candidate Advantage-Sensitivity Early-Warning Signal</div>
+        <h3 class="card-title">收敛机制宣称与改写白名单：将 <code>ΔÂ_canon</code> 严格定位为"待验证的优势敏感度预警信号"</h3>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">
+        <strong>诚实界定指标物理意义与改写器边界：</strong>组内标准化优势差 <code>ΔÂ_canon</code> 消除了原始分差 <code>Δr_canon</code> 对整组常数平移 <code>c</code> 的误报，但<strong>我们明确删去"唯有 Actor 投机时该指标才会升高"及"AST 100% 保证语义恒等"的过满主张</strong>——改写器意外改变局部语义、Judge 自身判别边界不稳定或正常分布漂移同样可能导致 <code>ΔÂ_canon</code> 升高。因此，<code>ΔÂ_canon</code> 在本文中被严格定义为<strong>待验证的优势敏感度候选预警信号（Candidate Advantage-Sensitivity Warning Signal）</strong>，其能否有效识别有害过优化完全交由留出阶段的实证检验回答：
+      </p>
+      <ul class="step-list">
+        <li class="step-item">
+          <span class="step-num">L1</span>
+          <div class="step-text"><strong>指标定义与诚实机制解释：组内标准化优势偏移 <code>ΔÂ_canon</code></strong>对锚点题的组内采样 <code>{y_1, …, y_G}</code> 及其受控改写版 <code>{ỹ_1, …, ỹ_G}</code>，计算改写前后的组内标准化优势平均绝对偏移：
+            <br><code>ΔÂ_canon(k) = E_x [ (1/G) ∑_i | Â_i(y) − Â_i(ỹ) | ]</code> 及组内排序翻转率 <code>FlipRate(y, ỹ)</code>。
+            <br><strong>数学性质与审慎解释：</strong>若改写仅使整组回答统一加减常数 <code>c</code>，则 <code>Â_i(y) ≡ Â_i(ỹ)</code>，<code>ΔÂ_canon = 0</code>（消除常数平移误报）。但 <strong><code>ΔÂ_canon</code> 升高仅表明"当前组内相对优势对表面改写高度敏感"，不能唯一证明 Actor 正在进行表面投机（Judge 自身脆性或改写噪声亦可能贡献）</strong>；它是否具备预警价值，取决于下述 L3 留出集上的误报/漏报实测。</div>
+        </li>
+        <li class="step-item">
+          <span class="step-num">L2</span>
+          <div class="step-text"><strong>简单可验证的受控变换白名单（Simple Verifiable Transformation Whitelist · 剔除复杂易错改写）</strong>放弃任何可能破坏隐藏语义的复杂改写（特别是剔除需处理 <code>break/continue</code> 与作用域的 <code>for/while</code> 循环转换，并承认锁定数字公式仍可能因自然语言连接词改变而破坏数学条件），第一版仅采用<strong>适用条件明确、实现极其简单的安全变换白名单 + 事后抽样审计</strong>：
+            <br>• <strong>Code（纯词法/格式级 AST 白名单）：</strong><strong>仅限 ① 注释增删、② 空行与缩进格式化（<code>black/ast.unparse</code>）、③ 无作用域冲突的局部临时变量 α-重命名</strong>（彻底删除 <code>for/while</code> 等控制流变换！），且改写前后必须在自生成测试输入上 100% 输出一致才纳入计算；
+            <br>• <strong>IFBench/IFEval（正交约束维度白名单）：</strong>解析题目显式约束类型，仅在与约束完全正交的简单维度上做确定性替换（如无格式限制时微调段落换行或礼貌起手式），且<strong>改写后强制运行确定性表面规则检查器（验证词数、禁词、JSON/列表格式等硬约束状态与原回答 100% 相同）</strong>，凡未通过检查的改写样本直接丢弃；
+            <br>• <strong>Math / Logic（句首过渡词模板替换 + 人工抽样审计）：</strong>不仅锁死所有数字、符号、公式与逻辑连接词（<code>if/then/only if/not/or/and</code>），且不再对条件句做自由重写，<strong>仅对步骤间的非逻辑过渡短语（如 <code>"Step 1:" ↔ "First,"</code>、<code>"Therefore," ↔ "Thus,"</code>）做确定性字典替换</strong>；并在每个阶段人工抽检 100 对改写样本，实测汇报<strong>改写标签保持率（Label Preservation Rate）</strong>。</div>
+        </li>
+        <li class="step-item">
+          <span class="step-num">L3</span>
+          <div class="step-text"><strong>作为"待验证候选预警信号"的留出验证（Stage 1–2 标定 → Stage 3–4 盲测）与简单规则正面对比</strong>在 Stage 1–2 上固定触发阈值（<code>k=0</code> 锚点标定 <code>μ + 2σ</code>，连续 2 次超限），<strong>在完全未参与规则开发的留出阶段（Stage 3–4）上盲测汇报其预测真实 Gold 性能见顶回落的误报率（FPR）、漏报率（FNR）与停止后真实准确率收益</strong>；并在主实验与消融矩阵中强制与 <strong>① 固定步数（Fixed Steps）、② 策略 KL 阈值停止、③ 策略熵/多样性坍缩停止（M-GRPO 式 Entropy Filter）</strong>做直接定量对比。</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 4-STAGE BENCHMARK ══════════════════════════════════════════ -->
+<section class="section">
+  <h2 class="section-title">4 阶段可验证异质任务流与零 Oracle 负例构造细则</h2>
+  <div class="card">
+    <div class="card-head">
+      <span class="card-icon icon-green">🗂️</span>
+      <div class="card-head-text">
+        <div class="card-label">Benchmark &amp; Zero-Oracle Negative Construction</div>
+        <h3 class="card-title">彻底废除 Stage 3 Oracle 特权 · 精确界定数据集来源与共识门槛（≥ 5/8 Quorum）</h3>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">
+        ① 全 4 阶段 100% 零训练期 Oracle 接触；② Stage 1 以 <code>ZebraLogic + BBH-Logic</code> 为主（对 Instruct 已接近饱和的 RuleTaker 降权仅作格式预热）；③ Stage 4 采用 <code>IFBench (AI2 2025)</code> 或自建 <code>IFEval ≥3 组合约束子集 + BFCL-v3 Multi-Turn</code>，各阶段初始准确率标注为 <strong>Step 0 待实测校准值</strong>。
+      </p>
+      <div style="overflow-x:auto">
+      <table class="stage-table">
+        <thead>
+          <tr>
+            <th>阶段</th>
+            <th>任务领域与数据集（起点待 Step 0 实测）</th>
+            <th>事后盲测 Gold Oracle (L3)</th>
+            <th>路线 A：分域规则破坏算子 (+正负例对称 W₀ 改写)</th>
+            <th>路线 B：带 ≥5/8 共识门槛的自一致性少数派</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="stage-badge s1">Stage 1</span></td>
+            <td><strong>Symbolic &amp; Deductive Logic</strong><br>ZebraLogic (主) + BBH-Logic<br><span style="font-size:11px;color:var(--muted)">预估起点 ~15–25% (Step 0 实测)</span></td>
+            <td>精确约束求解器匹配<br><span style="font-size:11px;color:var(--muted)">Exact truth-table solver</span></td>
+            <td>随机翻转/删除 1 条前提条件，或对调推导链末端的实体属性映射；正例 Demo 与破坏负例均以 1:1 经 W₀ 重写</td>
+            <td>采样 K=8 条，最大簇 ≥ 5/8 时取偏离解；<strong>注：因起点仅 15–25%，预期路线 B 产出率极低，显式报告产出率并由路线 A 规则负例主撑</strong></td>
+          </tr>
+          <tr>
+            <td><span class="stage-badge s2">Stage 2</span></td>
+            <td><strong>Code Generation</strong><br>MBPP+ / LiveCodeBench 精选集<br><span style="font-size:11px;color:var(--muted)">预估起点 ~45–55% (Step 0 实测)</span></td>
+            <td>隐藏单元测试沙箱执行<br><span style="font-size:11px;color:var(--muted)">Pass@1 on hidden tests</span></td>
+            <td>循环边界偏移（<code>&lt;</code> 改 <code>&lt;=</code>、索引 <code>+1</code>）、分支取反（+对称 W₀ 注释/命名改写，<strong>改写正例需经自生成输入沙箱验证输出不变才保留</strong>）</td>
+            <td><strong>CURE 式自生成输入测试：</strong>模型自写 3 个简单合法输入，沙箱运行 K=8 个候选代码，输出一致簇 ≥ 5/8 时取偏离代码</td>
+          </tr>
+          <tr>
+            <td><span class="stage-badge s3">Stage 3</span></td>
+            <td><strong>Mathematical Reasoning</strong><br>MATH-500 / GSM-Symbolic<br><span style="font-size:11px;color:var(--muted)">预估起点 ~50–60% (Step 0 实测)</span></td>
+            <td>SymPy + Math-Verify<br><span style="font-size:11px;color:var(--muted)">符号等价性验证</span></td>
+            <td>篡改中间推导步的正负号/系数或公式常数，向后重算使尾步"表面自洽但结果错误"（+对称 W₀ 句式改写）</td>
+            <td>采样 K=8 条，提取 <code>\boxed{}</code> 符号化简后投票，最大簇 ≥ 5/8 时取少数派<br><span style="font-size:11px;color:var(--green);font-weight:600">✓ 已废除 Oracle 过滤特权，100% 零接触</span></td>
+          </tr>
+          <tr>
+            <td><span class="stage-badge s4">Stage 4</span></td>
+            <td><strong>Multi-Constraint &amp; Multi-Turn Tool</strong><br><code>IFBench / IFEval-3+Constraints</code> (自建子集) + <code>BFCL-v3 Multi-Turn</code><br><span style="font-size:11px;color:var(--muted)">预估起点 ~35–45% (Step 0 实测)</span></td>
+            <td>确定性 Python 约束验证脚本 + AST 语法树精确解析器</td>
+            <td><strong>IFBench/IFEval-3+：</strong>故意破坏 ≥3 条组合约束中的 1–2 条；<br><strong>BFCL：</strong>删减必填参数或替换相近函数名（+对称 W₀ 改写）</td>
+            <td><strong>BFCL：</strong>对规范化 AST 调用序列投票（≥ 5/8 共识门槛）；<br><strong>IFBench/IFEval：</strong>开放文本无单一多数解，100% 由路线 A 规则破坏算子提供负例（协议显式声明）</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PILOT EXPERIMENT ════════════════════════════════════════════ -->
+<section class="section">
+  <h2 class="section-title">Pilot 2×2 快照归因与受控掩码干预实验（Section 3 · 探索与确认严格分离）</h2>
+  <div class="card">
+    <div class="card-head">
+      <span class="card-icon icon-accent">🔬</span>
+      <div class="card-head-text">
+        <div class="card-label">Exploratory vs. Confirmatory Split + Fixed-Architecture Masking</div>
+        <h3 class="card-title">消除 Pilot 选型偏差（开发对标定 → 留出迁移对盲测）· 同步 <code>ΔÂ_canon</code> 与输出分布变化归因</h3>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-warn" style="margin-top:0;margin-bottom:16px">
+        <span class="alert-icon">🚦</span>
+        <div class="alert-body">
+          <strong>Pilot Step 0（消除选型偏差 protocol：探索性标定与确认性评估严格隔离）：</strong>
+          <br>1) <strong>实测单步墙钟吞吐与功效参数估计：</strong>在 8×H800 上实测 7B GRPO (G=8) + GenRM (192 tokens) 的单步耗时（锁定 300–400 步/阶段），并估计跨阶段配对不一致率 <code>p̂_d</code> 与题内相关性 <code>ρ̂_intra</code>，用于仿真确定 <code>P_audit</code> 的独立题目数 <code>N_prompts</code>。
+          <br>2) <strong>【修复 Pilot 选型偏差（Selection Bias）】：</strong>审稿意见指出，若在 Pilot 中"不断增加 LR/Rank 或更换任务直到出现预期退化"，即便后续所有方法共用该超参，仍存在挑选对假设有利工况的选型偏差（Cherry-picking Regimes）。为此，我们将实验拆分为两个严格独立的阶段：
+          <br>&nbsp;&nbsp;• <strong>探索标定阶段（Exploratory Calibration · 仅限 <code>Stage 1 → Stage 2</code> 开发集）：</strong>允许在固定网格 <code>r ∈ {32, 64, 128} × LR ∈ {1e-5, 3e-5}</code> 内观测退化效应量；一旦选定配置，<strong>超参数即行冻结，且 <code>Stage 1 → Stage 2</code> 的探索数据明确标记为"机制校准集"</strong>；
+          <br>&nbsp;&nbsp;• <strong>独立确认阶段（Confirmatory Evaluation · 留出迁移对 <code>Stage 2 → Stage 3</code> &amp; <code>Stage 3 → Stage 4</code> + 标准默认超参双轨报告）：</strong>主文的核心假设检验（H1–H4）必须在<strong>未参与超参挑选的留出阶段切换（<code>Stage 2 → 3 → 4</code>）</strong>上独立成立；同时，<strong>未经任何探索调优的文献标准默认超参（Default Config: <code>r=64, LR=1e-5</code>）在全部 4 阶段上的结果必须同步汇报</strong>，使读者能客观区分"自然默认工况下的效应"与"高压压力测试下的效应"。
+          <br>3) <strong>预注册诊断分支（无论效应落入哪一主效应，均诚实报告 2×2 拆解结果）：</strong>
+          <br>&nbsp;&nbsp;• 若 <code>E_10 − E_00</code>（固定回答上的 Judge 漂移）占主导 → 支持跨角色参数污染为主因；
+          <br>&nbsp;&nbsp;• 若 <code>E_10 − E_00</code> 接近 0 而 <code>E_01 − E_00</code>（固定 Judge 面对输出分布变化的效应）占主导 → 诚实报告 LoRA 子空间下跨角色梯度污染有限，核心发现聚焦输出分布漂移与 <code>ΔÂ_canon</code> 预警分析；
+          <br>&nbsp;&nbsp;• 若二者均微弱 → 作为自奖励 GRPO 在跨阶段 LoRA 下的稳健性实证结论（Negative/Boundary Finding）如实发表。
+        </div>
+      </div>
+      <p class="card-desc">
+        固定 <strong>三类评估集（统一每题 4 pairs）</strong>：开发探针 <code>P_ext</code>（200 题 × 4 pairs = 800 pairs，由 Stage 1 末快照生成，供 Fisher 估计与开发监控）、独立盲审集 <code>P_audit</code>（不参与任何掩码与调参，独立题目数由仿真锁定）与实时在线采样 <code>P_on-policy</code>。执行以下 4 组受控实验：
+      </p>
+      <div style="overflow-x:auto">
+      <table class="pilot-table">
+        <thead>
+          <tr>
+            <th>组别</th>
+            <th>实验配置（分离固定架构掩码与独立 Dual-Adapter）</th>
+            <th>核心目的与去混杂设计</th>
+            <th>预期现象与严谨统计判据（三联指标 + 2×2 拆解）</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong class="mono">Group A</strong></td>
+            <td><strong>Unmasked Shared Baseline (m = 0%)</strong><br>固定混合架构 <code>(r_S=32, r_priv=32)</code>，无梯度掩码</td>
+            <td>建立 2×2 快照交叉评估完整基线：同时测量 <code>(E_10 − E_00)</code>、<code>(E_01 − E_00)</code> 与非加性交互项 <code>I_int</code></td>
+            <td class="hl-bad">Stage 2 推进时，<code>P_audit</code> 与 <code>P_on-policy</code> 上的 <code>Acc_rank / Sign_agree / ρ_Adv</code> 显著退化；量化检验 <code>I_int</code> 是否显著非零</td>
+          </tr>
+          <tr>
+            <td><strong class="mono">Group B</strong></td>
+            <td><strong>KL-Matched Shared-Rank Scaling (检验 H2)</strong><br>变化共享秩 <code>r_S ∈ {8, 32, 64}</code></td>
+            <td><strong>精确定义参考分布与对齐区间：</strong>横轴按相对阶段初策略的 KL 散度 <code>d_KL(π_A^(2,k) ‖ π_A^(2,0))</code> 对齐，仅在共同覆盖的交集区间 <code>[0, d_KL^(min-max)]</code> 内对比 Judge 漂移速率</td>
+            <td class="hl-warn">在共同覆盖的 KL 区间内，检验共享秩 <code>r_S</code> 越大，固定回答上的 Judge 漂移 <code>(E_10 − E_00)</code> 速率是否越快（H2）</td>
+          </tr>
+          <tr>
+            <td><strong class="mono">Group C</strong></td>
+            <td><strong>Dual-Adapter Disjoint Baseline</strong><br>独立双适配器 <code>(r_S=0, r_A=64, r_J=64)</code>，阶段内冻结 <code>θ_J</code></td>
+            <td><strong>诚实归因输出分布变化效应（不再直接等同于格式迎合）：</strong>因 <code>θ_J</code> 冻结，<code>E_10 − E_00 ≡ 0</code> 恒成立，在线退化严格对应 <strong>输出分布变化主效应 <code>(E_01 − E_00)</code></strong>。为控制难度幸存偏差，在固定题目子集与按 <code>Valid-Pair Coverage</code> 分层下汇报，并结合受控白名单改写下的 <code>ΔÂ_canon</code> 探查表面敏感度</td>
+            <td class="hl-good">量化无参数污染下的 <code>(E_01 − E_00)</code> 演化轨迹；检验后期 <code>Sign_agree</code> 下跌是否伴随 <code>ΔÂ_canon</code> 升高（将格式迎合作为待检验子机制而非默认唯一解释）</td>
+          </tr>
+          <tr>
+            <td><strong class="mono">Group D</strong></td>
+            <td><strong>Fixed-Architecture Fisher-Mask vs. Random-Mask (检验 H3)</strong><br>固定 <code>(r_S=32, r_priv=32)</code>，在 <code>P_ext</code> 上算 Judge 对角 Fisher，对比 <strong>Fisher-Mask vs. Random-Mask</strong>（<code>m ∈ {25%, 50%, 75%}</code>，并测 <code>m=100%</code> 私有32秩参考点；<code>m ∈ {25%, 75%}</code> 跑 2 Seeds）</td>
+            <td><strong>同容量下的定向保护 vs. 随机冻结：</strong>分离"掩码率 <code>m</code>"与"架构容量"，在完全相同的可训练参数量下，直接检验定向屏蔽 Judge 高 Fisher 坐标是否显著优于同比例随机掩码（不再将 <code>m=100%</code> 宣称为 Dual-Adapter 等价端点）</td>
+            <td class="hl-good">在独立盲审集 <code>P_audit</code> 上对比 Fisher-Mask 与 Random-Mask 的 <code>Acc_rank / Sign_agree</code> 保持率曲线，验证定向梯度掩码的净因果收益（H3）</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ EXPECTED RESULTS & TARGET METRICS ══════════════════════════ -->
+<section class="section">
+  <h2 class="section-title">四大显式假设（H1–H4）、完整运行矩阵（含慢教师/随机掩码/静态混合/正交消融）与算力总账（Section 4）</h2>
+  <div class="card">
+    <div class="card-head">
+      <span class="card-icon icon-teal">📊</span>
+      <div class="card-head-text">
+        <div class="card-label">Hypotheses H1–H4 &amp; Complete Execution Matrix</div>
+        <h3 class="card-title">全篇统一 H1–H4 协议（<code>P_audit</code> 仿真定样本 + <code>ΔÂ_canon</code> 留出盲测）· 全周期 2,400 H800·hrs 精确配平</h3>
+      </div>
+    </div>
+    <div class="card-body">
+      <div style="background:var(--bg-r2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12.5px;line-height:1.6">
+        <strong style="color:var(--head);display:block;margin-bottom:4px">📌 显式预注册的四大待检验科学假设（Explicit Hypotheses H1–H4 · 确认性检验在留出阶段 Stage 2→3→4 与独立盲审集 P_audit 上执行）：</strong>
+        • <strong>H1（跨阶段自奖励失真与优势退化）：</strong>在跨阶段异质流中，无隔离共参数自奖励 GRPO（Row 3）因固定回答上的 Judge 漂移 <code>(E_10 − E_00)</code> 与非加性共演化交互项 <code>I_int</code>，在独立盲审集 <code>P_audit</code> 上的组内优势保真度（<code>Acc_rank / Sign_agree / ρ_Adv</code>）显著退化，其抗遗忘表现相对 Oracle-GRPO（Row 10）显著恶化。<br>
+        • <strong>H2（共享容量与 Judge 漂移速率单调性 · Group B）：</strong>在共同覆盖的策略 KL 进度区间 <code>[0, d_KL^(min-max)]</code> 内，固定回答上的 Judge 漂移速率 <code>(E_10 − E_00)</code> 随共享秩 <code>r_S</code> 增大而单调递增。<br>
+        • <strong>H3（固定架构下 Fisher 掩码相对随机掩码的净收益 · Group D &amp; Row 7a/7b）：</strong>在固定混合架构 <code>(r_S=32, r_priv=32)</code> 与相同掩码率 <code>m</code> 下，定向屏蔽 Judge 高 Fisher 敏感坐标（Fisher-Mask）在独立盲审集 <code>P_audit</code> 上的优势保真度保持率显著优于同比例随机掩码（Random-Mask）。<br>
+        • <strong>H4（跨阶段 Replay 聚类鲁棒 TOST 与上限逼近）：</strong><strong>H4①（基于 Pilot 功效仿真的聚类 TOST）：</strong>跨阶段 Replay Warm-up 前后（<code>θ_J^(t-1,end)</code> vs. <code>θ_J^(t,0)</code>）在旧阶段<strong>独立盲审集 <code>P_audit</code>（每题 4 pairs，独立题目数 <code>N_prompts</code> 根据 Pilot 实测不一致率 <code>p̂_d</code> 与题内相关性 <code>ρ̂_intra</code> 在预设具有实际意义的等价边界 <code>δ = ±2.5%</code> 下经蒙特卡洛仿真确定）</strong>上的 <code>Acc_rank / Sign_agree</code> 进行 Paired Cluster-Bootstrap TOST 检验（同时汇报双侧 90% CI 与实测功效），且保持率显著优于 SVD Merge；<strong>H4②（描述性 CI 逼近）：</strong>主表中 Ours（Row 8）与 Oracle Upper Bound（Row 10）在每臂 n=3 seeds 下的遗忘率 FM 差异采用汇报均值差与 95% CI 的描述性对比。
+      </div>
+      <div style="overflow-x:auto">
+      <table class="pilot-table">
+        <thead>
+          <tr>
+            <th>方法配置（主表 10 行完整运行矩阵 · 含全部新增对照）</th>
+            <th>Seeds 配置</th>
+            <th>它回答的决定性审稿问题（同步新协议与新增基线）</th>
+            <th>前向平均准确率<br><span style="font-weight:400;text-transform:none">(Forward Avg Acc ↑)</span></th>
+            <th>旧任务遗忘率<br><span style="font-weight:400;text-transform:none">(Forgetting FM ↓)</span></th>
+            <th>P_audit 优势保真度<br><span style="font-weight:400;text-transform:none">(Acc_rank / Sign_agree ↑)</span></th>
+            <th>累计耗时<br><span style="font-weight:400;text-transform:none">(GPU·hrs)</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Sequential SFT</strong><br><span style="font-size:11px;color:var(--muted)">150 条 Demo / 阶段</span></td>
+            <td class="mono">1 Seed</td>
+            <td>Off-policy 监督微调下界</td>
+            <td class="mono">低</td>
+            <td class="mono hl-bad">严重遗忘 (~−12%)</td>
+            <td class="mono" style="color:var(--muted)">N/A</td>
+            <td class="mono">20h</td>
+          </tr>
+          <tr>
+            <td><strong>2. SDFT-Only &amp; SDFT-ICL (No RL)</strong><br><span style="font-size:11px;color:var(--muted)">2a: 仅 150 Demo; 2b: 检索 Demo 在全量无标签题上做 ICL 自蒸馏</span></td>
+            <td class="mono">1 Seed (各1)</td>
+            <td><strong>【决定性基线 1 · 对齐题目预算】</strong><code>2b. SDFT-ICL</code> 使见过的无标签 Prompt 数量与 GRPO 完全对齐，检验组内优胜劣汰相对单纯 ICL 自蒸馏的净收益</td>
+            <td class="mono hl-warn">中等（无奖励反馈信号）</td>
+            <td class="mono hl-good">低遗忘 (~−3%)</td>
+            <td class="mono" style="color:var(--muted)">N/A</td>
+            <td class="mono">65h<br><span style="font-size:10px;color:var(--muted)">(25h+40h)</span></td>
+          </tr>
+          <tr>
+            <td><strong>3. Shared Self-Rewarding GRPO (m=0%)</strong><br><span style="font-size:11px;color:var(--muted)">共参数无掩码基线 · 150 Demo + 全量无标签题</span></td>
+            <td class="mono hl-warn"><strong>3 Seeds</strong></td>
+            <td><strong>【检验 H1 · 核心基线】</strong>量化跨阶段切换下 <code>(E_10 − E_00)</code>、<code>(E_01 − E_00)</code> 与 <code>I_int</code> 如何共同导致优势信号失真与抗遗忘退化</td>
+            <td class="mono hl-warn">中等 (~55%)</td>
+            <td class="mono hl-bad">显著退化 (~−9%)</td>
+            <td class="mono hl-bad">严重恶化 (~58% / ~54%)</td>
+            <td class="mono">216h<br><span style="font-size:10px;color:var(--muted)">(3×72h)</span></td>
+          </tr>
+          <tr>
+            <td><strong>4. ICL Few-Shot Judge + Isolated Actor</strong><br><span style="font-size:11px;color:var(--muted)">不训练 θ_J，检索 k=6 条 Demo/负例放进 Prompt</span></td>
+            <td class="mono">1 Seed</td>
+            <td><strong>【决定性基线 2】80 步对比 Warm-up 有必要吗？</strong>测试纯 In-Context Learning 能否在异质新阶段充当合格裁判</td>
+            <td class="mono hl-warn">偏低（复杂逻辑/代码判别弱）</td>
+            <td class="mono hl-good">低遗忘 (~−3.5%)</td>
+            <td class="mono hl-warn">中等 (~66% / ~63%)</td>
+            <td class="mono">95h</td>
+          </tr>
+          <tr>
+            <td><strong>5. Shared + Judge Co-Training (RLER / Meta-Rewarding style)</strong><br><span style="font-size:11px;color:var(--muted)">每步 RL 同步重放历史+当前阶段 Judge 对比损失</span></td>
+            <td class="mono hl-warn"><strong>3 Seeds</strong></td>
+            <td><strong>【决定性基线 3 · 最强对手】架构隔离 vs. 边训边 Replay：</strong>对比双适配器隔离与每步同步更新 Judge（需额外 Judge Backward，算力高 53%）的性能与成本边界</td>
+            <td class="mono hl-warn">中高 (~60%)</td>
+            <td class="mono hl-warn">中低 (~−4.5%)</td>
+            <td class="mono hl-warn">中高 (~74% / ~71%)</td>
+            <td class="mono hl-bad">330h<br><span style="font-size:10px;color:var(--muted)">(3×110h)</span></td>
+          </tr>
+          <tr>
+            <td><strong>6. Shared + Slow-Teacher EMA Judge + Entropy Filter</strong><br><span style="font-size:11px;color:var(--muted)">Co-rewarding / M-GRPO 风格：EMA 慢更新裁判 (τ=0.995) + 低熵组过滤</span></td>
+            <td class="mono">1 Seed</td>
+            <td><strong>【新增前沿基线 4 · 单任务稳定化方法迁移】</strong>检验单任务自奖励 SOTA（慢速动量教师 + 熵坍缩过滤）能否解决跨异质阶段切换下的旧任务判别擦除</td>
+            <td class="mono hl-warn">中高 (~59%)</td>
+            <td class="mono hl-warn">中等 (~−5.5%)</td>
+            <td class="mono hl-warn">中等 (~70% / ~67%)</td>
+            <td class="mono">75h</td>
+          </tr>
+          <tr>
+            <td><strong>7. Fixed-Arch (r_S=32, r_priv=32): 7a. Fisher-Mask vs. 7b. Random-Mask (m=75%)</strong><br><span style="font-size:11px;color:var(--muted)">同架构同容量下对比定向 Fisher 掩码与随机掩码</span></td>
+            <td class="mono">1 Seed (各1)</td>
+            <td><strong>【决定性基线 5 · 检验 H3】</strong>在严格相同可训练容量下，检验 Fisher 定向屏蔽（7a）是否显著优于同比例 Random-Mask（7b），并与独立 Dual-Adapter（Row 8）分列比较</td>
+            <td class="mono hl-good">7a: ~61% vs 7b: ~57%</td>
+            <td class="mono hl-good">7a: ~−3.5% vs 7b: ~−6.0%</td>
+            <td class="mono hl-good">7a: ~77% vs 7b: ~68%</td>
+            <td class="mono">152h<br><span style="font-size:10px;color:var(--muted)">(76h+76h)</span></td>
+          </tr>
+          <tr style="background:var(--green-s)">
+            <td><strong>8. Ours (Dual-Adapter [r_S=0, r=64] + Replay Warm-up + ΔÂ_canon Warning Stop)</strong><br><span style="font-size:11px;color:var(--muted)">独立双适配器 + 跨阶段对比 Replay + 白名单受控改写 <code>ΔÂ_canon</code> 候选早停</span></td>
+            <td class="mono hl-good"><strong>3 Seeds</strong></td>
+            <td><strong>【主方法 · 检验 H4】</strong>完全消除 <code>(E_10 − E_00)</code> 参数污染 + 跨阶段 Replay 保持历史判别边界 + Stage 1–2 标定、Stage 3–4 盲测验证 <code>ΔÂ_canon</code> 预警早停</td>
+            <td class="mono hl-good"><strong>最高 (~63–65%)</strong></td>
+            <td class="mono hl-good"><strong>极低 (~−2.5% · 逼近 Row 10 CI)</strong></td>
+            <td class="mono hl-good"><strong>最高 (~82% / ~79%)</strong></td>
+            <td class="mono hl-good"><strong>216h</strong><br><span style="font-size:10px;color:var(--muted)">(3×72h)</span></td>
+          </tr>
+          <tr>
+            <td><strong>9. Multi-Task Static Mixing (Non-Continual Reference)</strong><br><span style="font-size:11px;color:var(--muted)">打破阶段顺序壁垒，将 4 阶段数据静态混合联合训练 Dual-Adapter</span></td>
+            <td class="mono">1 Seed</td>
+            <td><strong>【新增非持续参考点】</strong>量化"顺序阶段切换本身"相对于静态多任务混合所带来的性能折损（Continual Gap）</td>
+            <td class="mono hl-good">~64% (静态混合参考)</td>
+            <td class="mono" style="color:var(--muted)">N/A (非顺序流)</td>
+            <td class="mono hl-good">~83% / ~80%</td>
+            <td class="mono">72h</td>
+          </tr>
+          <tr style="border-top:2px dashed var(--border)">
+            <td><em style="color:var(--muted)">10. Oracle-Guided GRPO (Upper Bound)</em></td>
+            <td class="mono" style="color:var(--muted)"><em>3 Seeds</em></td>
+            <td><em style="color:var(--muted)">训练期直接使用 L3 确定性程序验证器给奖励（有外部验证器理想上限，汇报与 Row 8 的均值差及 95% CI）</em></td>
+            <td class="mono" style="color:var(--muted)"><em>~66%</em></td>
+            <td class="mono" style="color:var(--muted)"><em>~−2.0%</em></td>
+            <td class="mono" style="color:var(--muted)"><em>100% (Oracle)</em></td>
+            <td class="mono" style="color:var(--muted)"><em>135h</em><br><span style="font-size:10px;color:var(--muted)">(3×45h)</span></td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+
+      <!-- Realistic Compute Budget & Model Families -->
+      <div class="two-col" style="margin-top:16px">
+        <div style="background:var(--bg-r2);padding:14px 16px;border-radius:8px">
+          <p style="font-size:12px;font-weight:700;color:var(--head);margin:0 0 6px">🧮 全周期真实算力总账（全文统一配平：2,400 H800·hrs ≈ 8卡 12.5 天）</p>
+          <p style="font-size:12.5px;margin:0;line-height:1.55">
+            彻底消除前版算力数字前后矛盾，逐项精确加总（单轮 4 阶段标准耗时 <code>72h</code>，2 阶段 Pilot 耗时 <code>30h</code>）：<br>
+            • <strong>① Qwen2.5-7B 主表（1,376 GPU·hrs）：</strong>核心 4 行 × 3 Seeds（Row 3 <code>216h</code> + Row 5 <code>330h</code> + Row 8 <code>216h</code> + Row 10 <code>135h</code> = <strong><code>897h</code></strong>）+ 辅助与新增对照 6 项 × 1 Seed（Row 1 <code>20h</code> + Row 2a/2b <code>65h</code> + Row 4 <code>95h</code> + Row 6 慢教师 <code>75h</code> + Row 7a/7b Fisher/Random <code>152h</code> + Row 9 静态混合 <code>72h</code> = <strong><code>479h</code></strong>）；<br>
+            • <strong>② Llama-3.1-8B 跨家族复现（254 GPU·hrs）：</strong>Row 3 (<code>72h</code>) + Row 5 (<code>110h</code>) + Row 8 (<code>72h</code>) × 1 Seed；<br>
+            • <strong>③ Step 0 + Pilot Group A–D 含随机掩码对照（410 GPU·hrs）：</strong>Step 0 吞吐与功效仿真校准 (<code>50h</code>) + Group A/B/C/D 共 12 个两阶段 runs（含 Group D 的 <code>Fisher-Mask m ∈ {25,50,75,100%}</code>、<code>Random-Mask m ∈ {25,50,75%}</code> 及关键内点第 2 Seed，12 × 30h = <code>360h</code>）；<br>
+            • <strong>④ 三组件正交消融、简单停止基线与默认超参确认（360 GPU·hrs，5 × 72h）：</strong>(a) <strong>Dual-Adapter Only</strong>（无 Replay、固定步数）；(b) <strong>Dual-Adapter + Replay + 固定步数</strong>（无 <code>ΔÂ_canon</code> 早停，兼作 Fixed-Steps 停止基线，并在同一轨迹上评测 <strong>KL 阈值停止</strong>与<strong>策略熵坍缩停止</strong>）；(c) <strong>Growing-Rank SVD Merge</strong> 替代 Replay；(d) <strong>Direct-Logit (0-CoT)</strong> 替代 Rubric CoT；(e) <strong>文献默认超参确认跑（Default Config <code>r=64, LR=1e-5</code>）</strong>（消除 Step 0 选型偏差）。<br>
+            <strong>总计：<code>1,376 + 254 + 410 + 360 = 2,400 H800·hrs</code>（8×H800 满载 12.5 天）。</strong>
+          </p>
+        </div>
+        <div style="background:var(--bg-r2);padding:14px 16px;border-radius:8px">
+          <p style="font-size:12px;font-weight:700;color:var(--head);margin:0 0 6px">🧭 Figure 3 &amp; Figure 4 核心诊断图定稿（已全面同步新指标）</p>
+          <p style="font-size:12.5px;margin:0;line-height:1.55">
+            • <strong>Figure 3（2×2 快照交叉拆解 + 固定架构 Fisher vs. Random 掩码 + 跨阶段聚类 TOST）：</strong><br>
+            &nbsp;&nbsp;(a) 阶段推进过程中 <code>E_11 − E_00</code> 拆解为固定回答 Judge 漂移 <code>(E_10 − E_00)</code>、输出分布效应 <code>(E_01 − E_00)</code> 与非加性交互项 <code>I_int</code> 的动态演化；<br>
+            &nbsp;&nbsp;(b) 固定架构 <code>(r_S=32, r_priv=32)</code> 下 <strong>Fisher-Mask vs. Random-Mask</strong> 在独立盲审集 <code>P_audit</code> 上的 <code>Acc_rank / Sign_agree</code> 对比曲线（独立 Dual-Adapter 标为单独参考水平线，验证 H3）；<br>
+            &nbsp;&nbsp;(c) 跨阶段 Replay 前后在 <code>P_audit</code>（仿真确定题量）上的 Paired Cluster-Bootstrap TOST 等价带与 90% CI（验证 H4①）。<br>
+            • <strong>Figure 4（候选预警信号 <code>ΔÂ_canon</code> 留出阶段盲测 vs. 简单停止规则）：</strong>展示在留出阶段（Stage 3–4）上，<code>ΔÂ_canon &gt; μ_anchors + 2σ_anchors</code> 连续 2 次触发时刻相对于真实 Gold 性能峰值的提前/滞后分布，并汇报其相对 <strong>Fixed Steps、KL 阈值停止、Entropy 停止</strong> 的 FPR / FNR 与最终准确率对比。
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ACTION CHECKLIST ═══════════════════════════════════════════ -->
+<section class="section">
+  <h2 class="section-title">立即执行清单（已与全文新协议 100% 同步）</h2>
+  <ul class="checklist">
+    <li class="check-item urgent">
+      <span class="check-dot dot-urgent"></span>
+      <div class="check-text"><strong>【Step 0 · 最高优先（~50 GPU·hrs）】实测单步吞吐 + Pilot 功效仿真定 <code>P_audit</code> 题目数 + 探索/确认分离协议</strong>实测 8×H800 单步耗时与 4 阶段初始准确率；在 <code>Stage 1 → Stage 2</code> 上实测配对不一致率 <code>p̂_d</code> 与题内相关性 <code>ρ̂_intra</code>，<strong>通过 Parametric Cluster-Bootstrap 仿真确定在 <code>δ = ±2.5%</code> 下达到目标功效所需的 <code>P_audit</code> 独立题目数 <code>N_prompts</code></strong>。严格执行"<code>Stage 1 → 2</code> 探索标定、<code>Stage 2 → 3 → 4</code> 留出确认 + 默认超参 <code>(r=64, LR=1e-5)</code> 对照"双轨协议，杜绝选型偏差。</div>
+    </li>
+    <li class="check-item urgent">
+      <span class="check-dot dot-urgent"></span>
+      <div class="check-text"><strong>【工程打通】编写 2×2 快照交叉打分器 + 固定架构 Fisher/Random 掩码 + 简单白名单改写器（<code>ΔÂ_canon</code>）</strong>① 实现定期保存 <code>{θ_J^(t,0), θ_J^(t,k)}</code> 与 <code>{Y_0, Y_k}</code> 的 2×2 交叉评估管线，输出 <code>Acc_rank / Sign_agree / ρ_Adv</code>（含全对/全错组专门统计 <code>σ_J | (σ_gold = 0)</code>）；② 实现 <code>(r_S=32, r_priv=32)</code> 下的 Fisher-Mask 与同比例 Random-Mask；③ 实现剔除复杂循环转换后的<strong>简单受控改写白名单</strong>（Code 仅限注释/缩进/局部变量重命名并经沙箱检验；IFEval 正交维度改写后经表面规则检查器自检；Math/Logic 仅换句首过渡词并人工抽检 100 对审计标签保持率）。</div>
+    </li>
+    <li class="check-item">
+      <span class="check-dot dot-mid"></span>
+      <div class="check-text"><strong>【Pilot 实验（~360 GPU·hrs）】运行 Group A/B/C/D（含 Group D 同架构 Random-Mask 对照与双 Seed 内点）</strong>在共同覆盖的 <code>[0, d_KL^(min-max)]</code> 区间内对比 Group B 的 <code>(E_10 − E_00)</code> 斜率；在 Group C 中按固定难度子集与 Coverage 分层量化输出分布变化主效应 <code>(E_01 − E_00)</code> 及 <code>ΔÂ_canon</code> 敏感度；在 Group D 中严格对比同容量下的 Fisher-Mask 与 Random-Mask。</div>
+    </li>
+    <li class="check-item">
+      <span class="check-dot dot-mid"></span>
+      <div class="check-text"><strong>【主实验（1,630 GPU·hrs）】跑满 Qwen2.5-7B 主表 10 行（1,376h：核心 4 行×3 Seeds = 897h + 对照 6 项 = 479h）+ Llama-3.1-8B 复现（254h）</strong>完整覆盖 <code>SDFT-ICL</code>、<code>Judge Co-Training</code>、<code>Slow-Teacher EMA + Entropy Filter</code>、<code>Fixed-Arch Fisher vs. Random Mask</code> 与 <code>Multi-Task Static Mixing</code>；在独立盲审集 <code>P_audit</code> 上执行 H4① 聚类鲁棒 TOST，并记录每阶段末 <code>‖ΔW_A‖_F</code> 与旧任务激活漂移以检验 F2 机制中介假设。</div>
+    </li>
+    <li class="check-item">
+      <span class="check-dot dot-low"></span>
+      <div class="check-text"><strong>【正交消融与停止规则 PK（360 GPU·hrs）】三组件逐步拆解 + <code>ΔÂ_canon</code> 留出阶段盲测对比 Fixed-Steps / KL / Entropy 停止</strong>在未参与规则标定的 Stage 3–4 上盲测汇报 <code>ΔÂ_canon</code> 预警信号的 FPR / FNR，并与固定步数、KL 阈值停止、策略熵坍缩停止及文献默认超参配置做完整对比。</div>
+    </li>
+  </ul>
+</section>
+
+<!-- ══ REFERENCES ═════════════════════════════════════════════════ -->
+<section class="section">
+  <h2 class="section-title">核心引用文献（已修正全部 arXiv 编号与超链接一致性）</h2>
+  <div class="ref-grid">
+    <div class="ref-card">
+      <a href="https://arxiv.org/abs/2507.05386" target="_blank">RFT Naturally Mitigates Forgetting in CPT</a>
+      <div class="ref-meta">Lai et al. · HKISI/CAS · arXiv:2507.05386</div>
+      <div class="ref-role">直接基石：确立相近任务流且有外部 Oracle 时 GRPO 抗遗忘优于 SFT。</div>
+    </div>
+    <div class="ref-card">
+      <a href="https://arxiv.org/abs/2609.23989" target="_blank">ACLArena: Continual Post-Training Benchmark</a>
+      <div class="ref-meta">arXiv:2609.23989 · 2026</div>
+      <div class="ref-role">关键前提支撑：揭示跨异质阶段后训练仍存在显著遗忘（如搜索任务 45.2→14.6）。</div>
+    </div>
+    <div class="ref-card">
+      <a href="https://arxiv.org/abs/2510.08977" target="_blank">Breaking the Self-Confirming Loop in Self-Rewarding RL (RLER)</a>
+      <div class="ref-meta">arXiv:2510.08977 · 2025</div>
+      <div class="ref-role">单任务自奖励前沿对照：分析单任务策略—奖励共谋与回放，驱动本文聚焦跨阶段切换增量与慢教师基线（Row 6）。</div>
+    </div>
+    <div class="ref-card">
+      <a href="https://arxiv.org/abs/2009.04416" target="_blank">Phasic Policy Gradient (PPG)</a>
+      <div class="ref-meta">Cobbe et al. · OpenAI · ICML 2021 (arXiv:2009.04416)</div>
+      <div class="ref-role">必引前身（已修正超链接为 2009.04416）：深度 RL 中解耦策略与价值网络参数干扰的经典谱系。</div>
+    </div>
+    <div class="ref-card">
+      <a href="https://proceedings.mlr.press/v306/shenfeld26a.html" target="_blank">Self-Distillation Enables Continual Learning (SDFT)</a>
+      <div class="ref-meta">Shenfeld et al. · MIT · ICML 2026 Spotlight</div>
+      <div class="ref-role">关键对照基线（Row 2a/2b SDFT-Only &amp; SDFT-ICL）：对齐无标签题目预算下检验 RL 必要性。</div>
+    </div>
+    <div class="ref-card">
+      <a href="https://arxiv.org/abs/2401.12187" target="_blank">WARM: Weight Averaged Reward Models</a>
+      <div class="ref-meta">Ramé et al. · Google DeepMind · ICML 2024 (arXiv:2401.12187)</div>
+      <div class="ref-role">必引前身：权重平均/慢更新 RM 缓解 reward hacking 的经典参照。</div>
+    </div>
+    <div class="ref-card">
+      <a href="https://arxiv.org/abs/2405.09673" target="_blank">LoRA Learns Less and Forgets Less</a>
+      <div class="ref-meta">Biderman et al. · Databricks / MIT · TMLR 2024 (arXiv:2405.09673)</div>
+      <div class="ref-role">实验设计依据：解释为何严禁 Full-FT 对比 LoRA，并设立共享秩缩放实验（Group B）。</div>
+    </div>
+    <div class="ref-card">
+      <a href="https://arxiv.org/abs/2210.10760" target="_blank">Scaling Laws for Reward Model Overoptimization</a>
+      <div class="ref-meta">Gao, Schulman, Hilton · OpenAI · ICML 2023 (arXiv:2210.10760)</div>
+      <div class="ref-role">经典分析框架：支撑在对齐策略 KL 进度下评估奖励失真与过优化。</div>
+    </div>
+    <div class="ref-card">
+      <a href="https://arxiv.org/abs/2404.13076" target="_blank">LLM Evaluators Recognize and Favor Their Own Generations</a>
+      <div class="ref-meta">Panickssery et al. · NeurIPS 2024 (arXiv:2404.13076)</div>
+      <div class="ref-role">机制依据：支撑自奖励裁判表面形式偏见分析与 <code>ΔÂ_canon</code> 敏感度探测。</div>
+    </div>
+    <div class="ref-card">
+      <a href="https://arxiv.org/abs/2407.19594" target="_blank">Meta-Rewarding Language Models</a>
+      <div class="ref-meta">Wu et al. · Meta · arXiv:2407.19594</div>
+      <div class="ref-role">核心对手基线（Row 5）：Actor 与 Judge 同步共训练范式。</div>
+    </div>
+    <div class="ref-card">
+      <a href="https://arxiv.org/abs/2506.10947" target="_blank">Spurious Rewards: Rethinking Training Signals in RLVR</a>
+      <div class="ref-meta">Shao et al. · 2025 (arXiv:2506.10947)</div>
+      <div class="ref-role">方法学防线（已修正超链接为 2506.10947）：揭示 Qwen2.5 数学伪奖励现象，驱动引入 Llama-3.1-8B 复现。</div>
+    </div>
+  </div>
+</section>
+
+</div>

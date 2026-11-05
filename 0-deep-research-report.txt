@@ -1,0 +1,229 @@
+ 持续学习 × 后训练（Continual Learning + Post-Training）研究现状：面向 RSI 的顶会与近期预印本综述
+ 执行摘要
+ 研究时间点： 2026 年 10 月 27 日。本文重点覆盖 2024–2026 年 ICLR、ICML、NeurIPS，以及 2025–2026 年来自 MIT、UC Berkeley、Oxford、Google DeepMind、FAIR/Meta、UCLA 等团队的近期 arXiv 工作。需要特别说明：NeurIPS 2026 主会将在 2026 年 12 月举行，作者录用通知已于 9 月 24 日发出，但会议尚未举行；因此本文对 NeurIPS 的“已完成、可稳定比较”部分主要以 2024–2025 正式论文为锚点，并用 2026 arXiv 补足最前沿进展。citeturn21search3turn21search7
+ 最重要的结论是： “持续学习 + 后训练”正在从传统的“防止 catastrophic forgetting”问题，转变成一个更广义的 持续能力积累（capability accumulation）+ 何时更新（when to update）+ 用什么信号更新（how to update） 的问题。UC Berkeley 2026 的统一比较尤其清楚地表明，不同环境变化需要不同机制：prompt/context 方法可以快速适配但容易覆盖稳定知识，蒸馏方法擅长稳定积累但不善于改写过时事实，而在线 RL 对离散知识变化适应最好、却明显依赖奖励质量。citeturn22search0turn24view0
+ 对于 foundation model post-training， on-policy 与 off-policy 的差异正在成为持续学习的核心变量 。MIT 的 ICML 2026 Spotlight Self-Distillation Enables Continual Learning 将 demonstration-conditioned 模型作为自身 teacher，在学生自己的轨迹上进行 reverse-KL 蒸馏，从而把 demonstrations 转换成不需要显式 reward 的 on-policy training signal；其知识注入实验中 SDFT 达到 strict/lenient/OOD accuracy = 89/100/98，而标准 SFT 为 80/95/80。citeturn21search0turn21search1turn23view1
+ 与此同时，直接比较 SFT 与 reinforcement fine-tuning 的近期 CPT 工作发现，连续七个多模态任务后，SFT 的平均准确率为 54.0、forgetting measure 为 −10.4，而 GRPO 达到 60.0、FM 为 −2.3；在 MMMU/MMLU-Pro/POPE 等一般能力上，RFT 也明显比连续 SFT 更能保护原模型能力。这使“ 奖励驱动更新天然是否比 teacher-forced token imitation 更适合持续后训练 ”成为非常值得 RSI 深挖的问题。citeturn17view1turn22search3
+ 另一个明显趋势是 更新局部化 ：FAIR/Berkeley 用 sparse memory slots 将 NaturalQuestions 上的遗忘从 full fine-tuning 的 89% F1 drop、LoRA 的 71% 降至 11%；UCLA 的 ACLArena 则发现异质 agent post-training 阶段的参数更新只部分对齐，因此用 shared SDFT backbone + per-stage RL LoRA experts 隔离相互冲突的残差；Continual RL 中的 CKA-RL 也采取 task-specific knowledge vectors + adaptive merging。这三条线实际上都指向同一个设计原则： 不要让一个稀疏、局部或任务特定的学习信号重写整个模型。 citeturn22search5turn25view0turn25view1
+ 因此，对本文所采用的宽泛 RSI 定义，最有潜力的研究交叉点不是单纯“做一个新的 replay 算法”，而是： signal interpretation / uncertainty → credit assignment → sparse or modular update → consolidation → retention evaluation 。这条链同时连接稀疏奖励 RL、在线 RL、agent post-training、representation plasticity、模型编辑和 continual knowledge acquisition。该判断是对下述论文的综合推论，而不是某一篇论文的原话。citeturn20search2turn20search3turn20search0turn22search5turn25view0
+ 研究口径与 RSI 假设
+ RSI 在本问题中不是一个具有统一学术定义的缩写。 按照提问中的要求，本文不把它强行绑定到单一定义，而采用两个互补视角：
+ RSI-Signal： 将 RSI 理解为 Reinforcement Signal Interpretation / Reinforcement Sparse Incentives ，重点关注奖励稀疏、延迟、噪声、非平稳以及模型如何把弱 reward / demonstrations / teacher distributions 转换成有效更新；因此直接纳入 continual RL、GRPO/RFT、on-policy distillation、TD-style Bayesian continual learning 等工作。MIT 的 SDFT 明确把 demonstration learning 与 on-policy RL 联系起来，Oxford 的 TD-VCL 则从持续 Bayesian update 推导出与 temporal-difference targets 的数学联系。citeturn20search2turn14search4turn19search0
+ RSI-Representation： 将 RSI 理解得更宽，关注稀疏或不频繁的学习信号如何改变 representation、参数子空间和模型 plasticity；因此纳入 Parseval regularization、UPGD、sparse memory finetuning、Weight Space Consolidation、Momentum KD、SAFE 等。它们虽然不一定直接优化 reinforcement reward，但都在解决 RSI 最终不可避免的核心问题：一次有限的新信号究竟应该修改哪些 representation，以及怎样避免这些更新污染先前知识。citeturn20search0turn19search9turn22search5turn21search2turn14search1turn15view4
+ 这里的“post-training”也采用 foundation-model 社区较宽的工程含义，包括 SFT、continual instruction tuning、RFT/RL、on-policy distillation、knowledge insertion、PEFT/LoRA、model merging，以及 agent 的多阶段能力训练，而不仅限于某一种 RLHF pipeline。ACLArena 明确将 reasoning、search、e-commerce、instruction following 等异质训练阶段视为一个 Agent Continual Learning 问题。citeturn25view0turn17view0
+ 领域地图与时间线
+ 从近三年的工作看，方法可以粗略组织成五条相互汇合的路线： on-policy/distillation、reinforcement fine-tuning、parameter/representation localization、plasticity maintenance、replay/consolidation 。2026 年最明显的新变化，是这些路线开始在同一个 foundation-model post-training pipeline 中被直接比较和组合，而不再各自作为独立的 continual-learning 技巧存在。citeturn22search0turn20search2turn25view0
+timeline
+ title Continual Learning × Post-Training：2024–2026
+ 2024 : ICLR — UPGD：同时处理 forgetting 与 plasticity loss
+ : ICLR — SLM：LLM generalized continual learning
+ : ICML — Momentum KD：online CL 中的动态 teacher
+ : NeurIPS — Parseval：continual RL 的可训练性
+ : NeurIPS — SAFE：slow/fast PEFT
+ 2025 : ICLR Spotlight — DeepMind：新知识如何“渗透”并产生 priming
+ : NeurIPS — TD-VCL：Bayesian CL 与 temporal-difference
+ : NeurIPS — CKA-RL：knowledge-vector continual RL
+ : arXiv — FAIR/Berkeley Sparse Memory Finetuning
+ 2026 : ICLR — Forget Forgetting：瓶颈由 memory 转向 plasticity/compute
+ : ICML Spotlight — SDFT：demonstrations → on-policy signal
+ : arXiv — Berkeley：何时必须真正修改权重
+ : arXiv — RFT mitigates forgetting in CPT
+ : arXiv — UCLA ACLArena：multi-stage agent post-training
+ 上述年份和会议状态来自相应会议 proceedings/OpenReview 与论文原文；其中 SDFT 已正式收录于 ICML 2026 PMLR， Forget Forgetting 为 ICLR 2026 Poster，TD-VCL 和 CKA-RL 为 NeurIPS 2025，Parseval 为 NeurIPS 2024。citeturn21search1turn21search2turn14search4turn19search3turn19search10
+flowchart LR
+ A["连续到来的数据 / demonstrations / rewards"] --> B{"信号是什么？"}
+ B -->|"可靠显式 reward"| C["Online RL / RFT
+GRPO · CKA-RL"]
+ B -->|"只有 demonstrations"| D["On-policy distillation
+SDFT · OPD"]
+ B -->|"事实/知识更新"| E["Sparse memory / localized update"]
+ B -->|"任务流 + 足够 replay memory"| F["Replay + consolidation
+Weight Space Consolidation"]
+ B -->|"长期不确定性"| G["Bayesian / TD-style posterior update"]
+ C --> H{"干扰是否严重？"}
+ D --> H
+ E --> H
+ F --> H
+ G --> H
+ H -->|"是"| I["LoRA experts / sparse slots / knowledge vectors"]
+ H -->|"否"| J["共享 backbone 更新"]
+ I --> K["Consolidation / routing / merging"]
+ J --> K
+ K --> L["同时评估：新任务收益 + forgetting + forward transfer + general capability + compute"]
+ 这个 flowchart 是本文根据 SDFT、ACLArena、Sparse Memory Finetuning、CKA-RL、Weight Space Consolidation 与 TD-VCL 做的综合方法学抽象，而非任何单篇论文给出的分类。citeturn20search2turn25view0turn22search5turn25view1turn21search2turn19search0
+ 综合示意（非量化）：后训练方法越来越从“全局更新”走向“信号感知的局部更新” 
+ 全量 SFT 
+ On-policy distill 
+ Sparse / PEFT 
+ Routed experts 
+ 共享参数干扰较高 
+ 更新隔离较强 
+ 这一示意主要反映的是近年方法设计的共同方向，而不是经过统一 benchmark 得出的排序；Sparse Memory、MLE/LoRA experts 和 CKA-RL 均通过不同形式限制跨任务参数干扰。citeturn22search5turn15view0turn25view1
+ 重点论文一览
+ 下表优先选取直接涉及 continual post-training、continual RL、LLM knowledge updating、representation plasticity 的顶会论文和近期强相关预印本。对于没有一个统一 aggregate number 的论文，“Key metrics”保留论文实际报告的主要指标形式，而不人为制造不可比的单一分数。
+ Title
+ Authors/Affiliation
+ Venue/Year
+ One-sentence background
+ One-sentence method
+ One-sentence problem solved
+ RSI relevance
+ Datasets / Tasks
+ Key metrics
+ Link
+ Self-Distillation Enables Continual Learning 
+ Idan Shenfeld, Mehul Damani, Jonas Hübotter, Pulkit Agrawal；MIT / Improbable AI Lab / ETH Zurich。citeturn20search2
+ ICML 2026 Spotlight ，PMLR 306。citeturn21search0turn21search1
+ 传统 SFT 从固定 expert trajectories 做 off-policy imitation，在连续后训练中容易发生 distribution mismatch 和 catastrophic forgetting。citeturn20search2
+ SDFT 让同一个模型同时充当 student 与 demonstration-conditioned teacher，在 student 自生成轨迹上最小化 reverse KL，将 demonstrations 变成 on-policy supervision。citeturn21search0turn20search2
+ 解决“没有显式 reward 时怎样获得类似 on-policy RL 的持续学习优势”，同时兼顾新技能获取和旧能力保持。citeturn20search2
+ 极高： RSI-Signal；是 demonstrations → dense/on-policy reinforcement-like signal 的直接桥梁。
+ Science Q&A、Tool Use、Medical、知识注入，以及 HellaSwag、HumanEval、IF-Eval、MMLU、TruthfulQA、Winogrande 等 retention probes。citeturn23view3
+ Knowledge acquisition strict/lenient/OOD： 89/100/98 ，SFT 为 80/95/80；Medical 新任务 40.2 vs SFT 35.5，而旧任务均值 65.4 vs 60.2。citeturn23view1turn23view3
+ arXiv:2601.19897 · ICML/PMLR 
+ When Does Continual Learning Require Learning 
+ Anne Harrington et al.；UC Berkeley 为主要学术团队，另含 independent researchers 与 Capital Fund Management。citeturn22search0
+ arXiv 2026 
+ 现代 LLM continual learning 不只是“别忘记”，还必须区分 domain shift、缓慢 temporal drift 和离散事实改变，因为不同变化要求完全不同的更新行为。citeturn22search0
+ 建立 mechanism-agnostic protocol，在同一 Qwen3-8B 上比较 GEPA/ACE、SFT/SDFT、GRPO/SDPO、Cartridges 与 In-place TTT。citeturn22search0
+ 回答“什么时候 context/prompt 足够，什么时候必须真正把新知识学进权重”，并揭示稳定与更新过时知识之间的冲突。citeturn22search0
+ 极高： RSI-Signal；尤其适合研究 sparse/noisy/time-varying reinforcement signal。
+ TempWiki monthly drift、SEC 10-K temporal sentiment、ToolUse、FinQA、SciKE-Bio 等 sequentialized tasks。citeturn24view0
+ TempWiki 中 GRPO 是唯一 stable-F1 不与 drift-F1 反向移动的 weight-update 方法，平均相对 baseline +1.6 points 、最大阶段增益 +6.2 ；GEPA drift-F1 0.18→0.24，但 stable-F1 0.32→0.26。citeturn24view0
+ arXiv:2607.07847 
+ ACLArena: Agent Continual Learning in Multi-stage Post-training 
+ Haixin Wang et al.；UCLA / UC Santa Cruz。citeturn22search6
+ arXiv 2026 
+ 通用 agent 的 reasoning、search、tool use、instruction following 等能力通常来自不同 post-training 阶段，但异质 RL/SFT pipelines 会相互覆盖。citeturn25view0
+ 构建 ACLArena 比较 Sequential、MMOPD、SDFT、model merging，并提出 shared SDFT backbone + 每阶段 RL-LoRA expert + routing 的 Mixture of Low-Rank Experts。citeturn15view0turn25view0
+ 解决 heterogeneous agent capabilities 无法可靠压缩到单一共享 checkpoint、恢复一种能力又破坏另一种能力的问题。citeturn17view0
+ 极高： RSI-Signal + RSI-Representation；直接研究 RL residual 与 capability interference。
+ AIME 2026、GPQA、MMLU-Redux、NaturalQuestions、PopQA、TriviaQA、2WikiMultiHopQA、HotpotQA、MuSiQue、τ³-Bench retail/telecom/mock、IF-Eval/IF-Bench。citeturn17view0
+ Sequential 的 AIME26/NQ 为 10.21/33.5；MMOPD 提升至 21.25/45.2；SDFT 的 NQ/single-hop/multi-hop 达 48.3/55.6/38.0，但会损伤部分 e-commerce/IF 能力，说明 shared-weight consolidation 存在明显 Pareto trade-off。citeturn17view0
+ arXiv:2609.23989 
+ Reinforcement Fine-Tuning Naturally Mitigates Forgetting in Continual Post-Training 
+ Song Lai et al.；HKISI/CAS、City University of Hong Kong、Institute of Automation CAS / UCAS 等。citeturn22search3
+ arXiv 2025，2026 revised 
+ 大多数 continual post-training 工作默认使用 SFT，再额外加 replay、regularization 或 expansion，但“学习范式本身”对遗忘的影响此前缺乏系统对照。citeturn22search3
+ 在同一 Qwen2.5-VL-7B-Instruct 上对比 SFT 与 GRPO、RLOO、ReMax，并进一步提出 rollout-based instance filtering 以提高 RFT 稳定性和效率。citeturn17view1
+ 证明 reward-based post-training 本身可以形成隐式正则化，从而减少连续适配对历史任务和一般能力的破坏。citeturn22search3
+ 极高： 最直接的 continual post-training × reinforcement learning 论文之一。
+ ScienceQA、TextVQA、VizWiz、GQA、Geometry3K、PathVQA、Super-CLEVR；general capability 用 MMMU、MMLU-Pro、POPE。citeturn17view1
+ SFT：AvgAcc 54.0 、FM −10.4 ；GRPO： 60.0 / −2.3 ；MMMU-CoT 从 Base 52.1 经 SFT 降至 40.1，而 GRPO 达 54.2。citeturn17view1
+ arXiv:2507.05386 
+ Continual Learning via Sparse Memory Finetuning 
+ Jessy Lin, Luke Zettlemoyer, Gargi Ghosh, Wen-Tau Yih, Aram Markosyan, Vincent-Pierre Berges, Barlas Oğuz；FAIR at Meta / UC Berkeley。citeturn22search5
+ arXiv 2025 
+ LLM 的 dense/shared parameters 使一次很窄的新知识更新也可能影响大量此前能力。citeturn22search5
+ 只更新相对 pretraining usage 被新知识强激活的 memory slots，并用稀疏 memory-layer access 限制干扰。citeturn22search5
+ 在保持相似新知识 acquisition 的情况下，把事实学习造成的跨任务遗忘大幅压低。citeturn22search5
+ 极高： RSI-Representation；非常适合“稀疏奖励→稀疏 credit assignment”的研究迁移。
+ 1K sequential TriviaQA facts；NaturalQuestions、GSM8K 等 held-out probes。citeturn22search5
+ NaturalQuestions F1 drop：full FT 89% 、LoRA 71% 、Sparse Memory FT 仅 11% ，同时维持相当的新知识学习水平。citeturn22search1turn22search5
+ arXiv:2510.15103 
+ Forget Forgetting: Continual Learning in a World of Abundant Memory 
+ Dongkyu Cho, Taesup Moon, Rumi Chunara, Kyunghyun Cho, Sungmin Cha；NYU / Seoul National University。citeturn21search2turn21search6
+ ICLR 2026 Poster 。citeturn21search2
+ 经典 CL 通常假设 exemplar memory 极度稀缺，但在现代系统中 GPU compute 可能比存储更昂贵，此时瓶颈会从 forgetting 转向 plasticity。citeturn21search2
+ Weight Space Consolidation 结合 ranking-based parameter reset 恢复 plasticity，再以 weight averaging 提升 stability。citeturn21search2
+ 解决 replay 数据较充分时旧任务过度主导权重、导致模型无法有效吸收新任务的问题。citeturn21search2
+ 高： RSI-Representation；提示 RSI 不应只问“怎么保存旧知识”，还要测长期 reward-learning plasticity。
+ CIFAR-100、ImageNet-100 class-IL；TRACE 八领域 LLM continual instruction tuning。citeturn16view0turn16view1
+ CIFAR-100 在 memory size 20/200/500 时为 52.00/73.57/78.25% ，Replay 为 48.92/70.84/76.90；相对 offline merging 在不同 memory size 下高约 2–9 points 。citeturn15view2
+ arXiv:2502.07274 · OpenReview 
+ How new data permeates LLM knowledge and how to dilute it 
+ Chen Sun et al.；Google DeepMind。citeturn20search3
+ ICLR 2025 Spotlight 。citeturn13search0
+ LLM 学习一条新事实后，不仅会记住该事实，还可能把相关概念错误地 generalize 到无关上下文，形成 knowledge “priming”。citeturn20search3
+ 构建 Outlandish 数据集测量知识渗透，并提出 stepping-stone corpus augmentation 与 ignore-top-k update pruning 控制更新传播。citeturn20search3
+ 解决新知识 insertion 对既有 representation 产生不可控 collateral effects 的问题。citeturn20search3
+ 高： RSI-Representation；可理解为“单个 reinforcement/update signal 怎样在网络中错误扩散”的直接机制研究。
+ Outlandish 1,320 samples、CounterFact；PaLM-2、Gemma、Llama 多种模型/规模/训练阶段。citeturn20search3
+ stepping-stone / ignore-k 等方法可把不希望的 priming 降低约 50–95% ，同时保留新知识学习能力。citeturn20search3
+ arXiv:2504.09522 
+ Temporal-Difference Variational Continual Learning 
+ Luckeciano C. Melo, Alessandro Abate, Yarin Gal；OATML / OXCAV, University of Oxford。citeturn18view0
+ NeurIPS 2025 Main Conference 。citeturn14search4turn14search8
+ 标准 Variational Continual Learning 每次只依赖最近一次 approximate posterior，因此 approximation errors 会随连续更新递归累积。citeturn14search4
+ n-step KL / TD-VCL 同时利用多个历史 posterior estimates，并证明其目标可写成类似 discounted n-step temporal-difference targets 的形式。citeturn19search0
+ 降低 Bayesian continual updates 的 compounding posterior error 和 catastrophic forgetting。citeturn14search4
+ 极高： 概念上最贴近 RSI；把 CL 的历史信号整合与 RL temporal-difference bootstrapping 直接连接起来。
+ PermutedMNIST-Hard、SplitMNIST-Hard、SplitNotMNIST-Hard 等 Bayesian CL benchmarks。citeturn19search0
+ 论文主图中，10-task PermutedMNIST-Hard 的 TD(λ)-VCL 图读数约 0.89 average accuracy，而标准 VCL 约 0.78 ；作者在多项 CL benchmark 上报告优于 Bayesian baselines。citeturn18view0turn14search4
+ arXiv:2410.07812 · NeurIPS 
+ Continual Knowledge Adaptation for Reinforcement Learning 
+ Jinwu Hu et al.；South China University of Technology / Pazhou Laboratory / CQUPT。citeturn25view1
+ NeurIPS 2025 。citeturn19search3
+ Continual RL 既要避免旧 policy knowledge 被覆盖，也要让历史技能对后续任务产生 forward transfer。citeturn25view1
+ CKA-RL 维护 task-specific knowledge-vector pool，在新任务上动态适配历史向量，并用 Adaptive Knowledge Merging 合并相似向量控制内存规模。citeturn25view1
+ 同时解决 CRL 的 catastrophic forgetting、knowledge under-utilization 与 task 数增长后的扩展性。citeturn25view1
+ 极高： 直接 continual RL；适合作为稀疏 reward 下 reusable policy knowledge 的基线。
+ Meta-World、SpaceInvaders、Freeway。citeturn25view1
+ 相对已有 SOTA，作者报告 overall performance +4.20% ，forward transfer +8.02% 。citeturn25view1
+ arXiv:2510.19314 
+ Parseval Regularization for Continual Reinforcement Learning 
+ Wesley Chung, Lynn Cherif, David Meger, Doina Precup；Mila / McGill University。citeturn20search0
+ NeurIPS 2024 。citeturn19search10
+ 深度 RL 网络在长期训练和任务切换后会发生 loss of plasticity、trainability loss 与 primacy bias，使后来的奖励信号越来越难被学到。citeturn19search10
+ 在权重矩阵上施加 Parseval regularization，使其保持近似正交，从而维持 initialization 时良好的 conditioning 和梯度传播性质。citeturn20search0
+ 解决 continual RL 中“网络还记得旧策略，但已经学不动新策略”的 plasticity failure。citeturn20search0
+ 极高： RSI-Representation；尤其适用于研究为什么稀疏/后期 reward 无法有效塑造 representation。
+ Gridworld、CARL、MetaWorld continual RL suites。citeturn19search10
+ 主要报告 episodic return / success-rate performance profiles；Parseval 在三类环境中均带来显著且较一致的改进，同时分析 stable rank、weight norm、policy entropy 等 trainability metrics。citeturn20search0
+ arXiv:2412.07224 · NeurIPS 
+ Addressing Loss of Plasticity and Catastrophic Forgetting in Continual Learning 
+ Mohamed Elsayed, A. Rupam Mahmood；University of Alberta / Alberta Machine Intelligence Institute。citeturn20search1
+ ICLR 2024 Poster 。citeturn19search9
+ 持续学习网络可能同时出现两个不同失效：高价值旧 feature 被覆盖，以及大量低价值单元变僵硬导致新任务学不动。citeturn19search9
+ UPGD 估计 unit/weight utility，对高 utility 参数减少 perturbation 以保护知识，对低 utility 参数增加扰动以恢复 plasticity。citeturn20search1
+ 在无需已知 task boundaries、replay buffer 或预训练的 streaming setting 中同时处理 forgetting 与 plasticity loss。citeturn19search9
+ 高： RSI-Representation；可直接迁移到“哪些单元值得由 sparse reward 更新”的 credit-allocation 问题。
+ 数百次 non-stationarity 的 streaming tasks、Input-Permuted MNIST 类问题，并扩展到 PPO reinforcement-learning 实验。citeturn19search9
+ 采用 online accuracy 与专门定义的 plasticity-loss metric；标准 Adam 随任务推进性能下降，而 UPGD 持续改善，并在 PPO 实验中避免 Adam 的后期 policy-performance collapse。citeturn19search9
+ arXiv:2404.00781 · OpenReview 
+ Rethinking Momentum Knowledge Distillation in Online Continual Learning 
+ Nicolas Michel, Maorong Wang, Ling Xiao, Toshihiko Yamasaki；Université Gustave Eiffel/CNRS LIGM / University of Tokyo。citeturn14search9
+ ICML 2024 
+ Online CL 中每个样本通常只能看到一次，固定旧 teacher 很快过时，而不断保存历史 teachers 又不现实。citeturn14search1
+ 用当前 student 的 exponential-moving-average 作为不断进化的 teacher，并设计 teacher-dependent weighting 控制 stability–plasticity。citeturn14search1
+ 让 knowledge distillation 在未知 task boundaries 的 single-pass online stream 中既保留旧知识又支持 backward transfer。citeturn14search1
+ 中高： RSI-Representation；动态 teacher 可类比为低方差、稠密的辅助 reinforcement signal。
+ ImageNet100 为关键大规模结果，并在多种 online continual image-classification settings 中验证。citeturn14search1
+ 在 ImageNet100 上将已有 SOTA accuracy 提升 超过 10 个百分点 。citeturn14search1turn14search5
+ arXiv:2309.02870 
+ SAFE: Slow and Fast Parameter-Efficient Tuning for Continual Learning with Pre-Trained Models 
+ Linglan Zhao et al.；SJTU / Tencent Youtu / Zhejiang University。citeturn14search6
+ NeurIPS 2024 
+ PTM-based CL 若首阶段直接 PET 容易破坏 pretrained knowledge，而之后完全冻结参数又牺牲对真正新 concept 的 plasticity。citeturn14search2
+ SAFE 使用 slow PET 保存通用 pretrained representation、fast PET 连续学习新概念，并通过 feature alignment、cross-classification 与 entropy aggregation 结合两支。citeturn14search2
+ 在 replay-free、近恒定额外参数开销下协调 foundation-model generalization 与新任务 plasticity。citeturn14search6
+ 中高： RSI-Representation；slow/fast timescale 对 delayed/sparse reinforcement adaptation 很有启发。
+ CIFAR100、ImageNet-R、ImageNet-A、CUB200、Omnibenchmark、VTAB、DomainNet，ViT-B/16 backbone。citeturn15view4
+ DomainNet final accuracy 67.82 vs RanPAC 66.6；ImageNet-A 比 second-best 高 4.4 points ；六数据集平均提升约 2.1 points 。citeturn15view4
+ arXiv:2411.02175 
+ Scalable Language Model with Generalized Continual Learning 
+ Bohao Peng, Zhuotao Tian, Shu Liu, Mingchang Yang, Jiaya Jia；CUHK / SmartMore。citeturn14search3
+ ICLR 2024 。citeturn7search5
+ 早期 LLM CL 方法往往依赖 experience replay、task-ID 或严格 optimization constraints，难以部署为真正的 generalized continual learner。citeturn14search3
+ SLM 使用 Joint Adaptive Re-parameterization 与 Dynamic Task-related Knowledge Retrieval，根据输入动态检索并组合 task-related parameterization。citeturn14search3
+ 实现无需 replay 和 inference task-ID 的跨领域、跨 task-type continual language learning。citeturn14search11
+ 中高： representation/routing 路线；对 RSI 的 context-dependent parameter routing 有直接借鉴价值。
+ BERT continual benchmark、T5 few-shot CL；LLaMA2-7B 上涵盖 medical QA、MMLU multiple choice、finance sentiment。citeturn17view2
+ BERT benchmark avg 79.1 ，IDBR 76.3、ProgPrompt 77.9；T5 avg 73.1 ，LFPT5 52.7。citeturn17view2
+ arXiv:2404.07470 
+ 趋势与综合判断
+ 第一，continual post-training 正从“数据重放问题”变成“learning-rule 问题”。 过去的默认思路往往是先接受 SFT 会忘记，再用 replay、EWC、adapter 或 model expansion 修补；SDFT 与 RFT-CPT 的结果则提示，更上游的问题可能是 SFT 的 off-policy、teacher-forced gradient 本身就更容易产生大范围参数漂移，而 on-policy training signal 可以天然约束更新到当前 policy 实际访问的状态分布。MIT 的结果显示 SDFT 同时提高新任务表现和 retention；多模态 CPT 的对照也显示 GRPO/RLOO 相对 SFT 有显著更小的 forgetting measure。citeturn20search2turn23view3turn17view1
+ 第二，稳定性—可塑性（stability–plasticity）重新成为核心，而不是一个已经“解决”的经典问题。 ICLR 2026 的 Forget Forgetting 显示，当 exemplar memory 达到现实中并不昂贵的水平后，单纯防 forgetting 的边际价值下降，真正限制持续能力积累的是旧权重造成的 plasticity loss；Parseval 与 UPGD 从不同角度给出了类似证据：长期训练会让模型越来越难响应新任务/新 reward，即使旧知识保存得很好。citeturn21search2turn20search0turn19search9
+ 第三，2025–2026 最一致的结构趋势是“shared core + localized residual”。 FAIR/Berkeley 的 sparse memory slots、UCLA 的 per-stage RL LoRA experts、CKA-RL 的 task-specific knowledge vectors，以及 SAFE 的 slow/fast PET 都避免让每次更新修改整个 shared representation；这些方法形式不同，却都把 interference 控制变成了“更新支持集（update support）应该多大”的问题。citeturn22search5turn15view0turn25view1turn14search2
+ 第四，蒸馏正在从“保存旧输出”转向“产生训练信号”。 Momentum KD 使用持续演化的 EMA teacher；SDFT 用 demonstration-conditioned self-teacher 在 student trajectories 上产生 token-level corrections；ACLArena 的 OPD/MMOPD 则让旧 checkpoint 在新模型自身访问的行为状态上充当 teacher。换言之，distillation 在越来越多工作中承担的是一种 低方差、稠密、可持续生成的 pseudo-reward / policy-improvement signal 角色，而不仅是传统 logit matching。最后一句是本文基于这些方法机制做出的解释。citeturn14search1turn20search2turn25view0
+ 第五，“事实变化”与“新增事实”不能再使用同一个 continual-learning objective。 Berkeley 的 TempWiki 结果很关键：SDFT 对累积稳定知识有效，但在必须推翻旧事实时会因为锚定旧 belief 而破坏 stable facts；GRPO 在这个 benchmark 上反而表现出更好的 change/retention trade-off。这意味着 RSI 系统首先必须解释信号究竟表示“添加知识”“修正知识”“短期异常”还是“真正的 regime shift”，再决定是否更新。citeturn24view0turn22search0
+ 第六，evaluation 正从单一 final accuracy 转向多维长期指标。 最新工作同时测 new-task accuracy、forgetting measure、forward transfer、stable-vs-drift F1、general benchmark retention、OOD transfer、训练/VRAM 成本甚至 parameter/trainability statistics；这对 RSI 特别重要，因为一个方法完全可能获得更高当前 reward，却通过 representation collapse 换取短期收益。citeturn17view1turn25view1turn24view0turn20search0turn16view1
+ RSI 开放问题与研究方向
+ 最值得优先研究的是“signal semantics before optimization”。 现有 RL 算法通常默认 reward 给定之后就应被最大化，但持续环境中同一个低 reward 可能意味着模型能力不足、环境已经变化、reward model 失真、探索不足或只是高方差随机事件。Berkeley 的 temporal-drift 实验已经说明 noisy reward 会改变不同更新范式的相对优劣；一个 RSI-specific 系统可以在 optimizer 前增加 latent change detector，显式估计 novelty / reliability / permanence / conflict ，再决定是否进入 weight update。citeturn22search0turn24view0
+ 第二个方向是 sparse reinforcement signal → sparse parameter credit。 FAIR/Berkeley 已证明 factual update 没有必要触碰所有参数：选择少数 memory slots 可以把 held-out F1 degradation 从 71–89% 级别压到 11%。自然的 RSI 扩展是让 reward attribution 决定应该打开哪些 memory slots、LoRA experts、attention heads 或 MLP subspaces，而不是把一个 episode-level scalar reward 通过整个网络反向传播。这是基于 Sparse Memory、MLE 和 UPGD 的综合研究建议。citeturn22search5turn15view0turn20search1
+ 第三个方向是把 SDFT 与真正的 sparse-reward RL 做成两阶段或混合更新。 SDFT 的优势是无需 reward 即可从 demonstration 生成 dense token-level correction，而 ACLArena 的诊断显示 SFT/SDFT 更适合建立宽泛、方向一致的行为，RL 的更新则更小、更 policy-local、适合最终 refinement。一个有吸引力的 RSI pipeline 因而是：先利用 demonstrations/self-distillation 建立稳定 skill manifold，再只在 reward 能提供额外信息的位置执行小规模 RL residual update。ACLArena 的 MLE 已经提供了这一方向的初步工程实例。citeturn20search2turn25view0
+ 第四个方向是双时间尺度 continual RL。 SAFE 的 slow/fast learner、ACLArena 的 shared backbone/per-stage residual、CKA-RL 的 historical knowledge vector pool 都暗示可以把“长期稳定 representation”与“短期 reward-driven adaptation”拆开：fast subsystem 根据近期稀疏奖励快速变化，slow subsystem 仅在多次一致证据积累后 consolidation。对 reward 特别 sparse 或 delayed 的 RSI，这比每个 episode 都直接改 shared backbone 更合理。citeturn14search2turn15view0turn25view1
+ 第五个方向是把 TD 的思想从 value learning 推广到“持续模型更新的证据聚合”。 TD-VCL 的关键不是它本身是 RL 算法——作者明确说明它不是——而是它展示了一个有趣的数学事实：持续学习时不必只根据最近一个 posterior/checkpoint 约束下一步，可以像 n-step/TD(λ) 一样让多个历史估计共同形成 update target，从而减少单次错误信号的长期放大。对 sparse/infrequent reward，研究“checkpoint-level TD targets”或“posterior-level eligibility traces”是一个很自然但仍相对空白的方向。citeturn14search0turn19search0
+ 第六个方向是专门构造 RSI Continual Post-Training benchmark，而不是继续只用静态 CL 分类任务。 一个更有判别力的 benchmark 应同时包含：稀疏且延迟的 reward、部分错误 reward、真正改变的 facts、永远不应改变的 stable facts、周期性 regime shift、多技能 agent stages，以及 reward-free demonstrations；核心指标应至少同时报告 cumulative return/new-task score、backward forgetting、forward transfer、stable-knowledge retention、OOD transfer、reward/sample efficiency、parameter/update sparsity 和 GPU/VRAM cost。这套设计是综合 TempWiki、ACLArena、RFT-CPT、CKA-RL 与 Weight Space Consolidation 的实验缺口提出的。citeturn24view0turn17view0turn17view1turn25view1turn21search2
+ 第七个方向是研究“什么时候根本不该学习”。 在真实部署系统中，context/RAG、prompt memory、test-time adaptation 与 weight update 不应被视为竞争关系，而应形成一个 update hierarchy：短暂或低置信信号留在 context；重复但局部的信号进入 external/sparse memory；高置信、跨 episode 稳定的模式才 consolidation 到 shared weights；只有可验证 reward 足够可靠时才进行更激进的 RL update。Berkeley 的统一实验已经表明不存在一个 update mechanism 在所有 temporal/domain regimes 下都最好，因此“选择学习机制”本身很可能应该成为 RSI 的上层决策问题。citeturn22search0turn24view0
+ 综合优先级判断： 若目标是做一条兼具新颖性和当前研究势能的 RSI 研究线，最有吸引力的切入点是 reward-aware continual post-training with localized updates ：建立一个能够判断 reinforcement signal 是否可信、是否代表持久变化的 gating module；根据该解释将 credit 路由到 sparse memory/LoRA expert；使用 SDFT 或历史 policy 做 dense auxiliary supervision；最后通过 replay/weight averaging/TD-style historical constraints 进行周期性 consolidation。这个组合恰好把目前彼此分散的 SDFT、RFT、Sparse Memory、ACLArena、TD-VCL、plasticity maintenance 六条前沿线汇合起来，但目前尚没有上述论文给出一个完整统一实现，因此这里应视为 研究机会判断 而非已被证明的最佳方法。citeturn20search2turn17view1turn22search5turn25view0turn19search0turn20search0

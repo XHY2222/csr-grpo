@@ -1,0 +1,267 @@
+ Judge-Policy Dual Drift · Paper Plan 
+ 8 × H800 · Continual Post-Training · Paper Design
+ Judge-Policy Dual Drift in Continual Self-Rewarding RL
+ 完整 paper 方案设计文档。涵盖核心假设、算法架构、4 阶段 benchmark、Pilot 因果实验与实验协议。
+ 目标：ICLR / ICML / NeurIPS 
+ 模型：Qwen2.5-7B · Frozen Base + Dual-LoRA 
+ 算力：8 × H800 
+ 2026-10-27 
+ Paper 核心主张
+ Actor-Judge 双重漂移：持续自奖励 RL 的诊断与修复
+ 前人（RFT-CPT、ACLArena）发现用 GRPO 做持续训练天然抗遗忘，但那是因为他们依赖 永远不会随模型参数漂移的外部规则裁判（Stationary External Oracle） ；而现有的自奖励工作（Self-Rewarding LMs）虽然摆脱了外部规则，却只在 单任务静态分布 下验证。
+ 本文首次揭示这一 正交盲区（Orthogonal Blindspot） ：当在持续任务流中用模型自给自足提供奖励时，Actor 的策略梯度会率先污染共享参数中的裁判子空间（Judge Subspace），导致 Capability Drift（生成退化） 与 Reward Calibration Drift（裁判失准） 双重崩塌，使 GRPO 的抗遗忘红利破灭。通过 Dual-Adapter 物理隔离 + SDFT 冷启动，我们在完全不依赖训练期外部 Oracle 的前提下，将持续自奖励 RL 的表现拉回逼近完美外部 Oracle 的上限。
+ 弥合"持续 RL"与"自奖励"正交盲区 
+ 揭示失去完美 Oracle 时 GRPO 抗遗忘红利缩水 75% 
+ 三项误差分解理论框架 
+ Dual-Probe 解耦污染与迎合 
+ Dual-Adapter 物理隔离 + SDFT 冷启动 
+ 📚 
+ 文献基础
+ 方向由哪些论文嫁接而来
+ ① 
+ RFT-CPT（arXiv 2507.05386） GRPO 在连续 7 个多模态任务上的遗忘率（FM −2.3）天然远低于 SFT（FM −10.4）。确立"用 GRPO 作为持续训练主骨架"的核心前提。
+ ② 
+ Berkeley 2607.07847 在线 RL 最适应离散知识变化，但极度依赖奖励信号质量——直接催生了对"奖励信号失真（Reward Drift）"的关注。
+ ③ 
+ MIT SDFT（ICML 2026）+ UCLA ACLArena On-policy 更新是抗遗忘核心（SDFT 89/100/98 vs SFT 80/95/80）；多阶段异质 RL 存在参数残差冲突。
+ ④ 
+ Self-Rewarding LMs（Yuan et al. Meta 2024）+ DeepSeek-R1/GRPO 将持续 RL 的外部 oracle 替换为模型自身 LLM-as-a-Judge + GRPO 在线采样，构成本文实验设定。
+ 🎯 
+ 差异化定位
+ 与现有工作的核心区别
+ vs 
+ 对比 RFT-CPT / Berkeley / ACLArena 彼等全部假设 Verifier 是外部给定的静态规则。本文探讨 Self-Rewarding 场景：Actor 遗忘旧技能的同时，充当 Judge 的打分能力也在跨任务中漂移。
+ vs 
+ 对比 Self-Rewarding LMs / RLVR 自博弈 原文仅在静态指令集上做离线多轮 DPO。本文置于非平稳连续任务流 + 在线 GRPO rollout 下，首次解耦 Capability Drift 与 Reward Calibration Drift。
+ vs 
+ 对比 SAFE / Momentum KD / ACLArena MLE 彼等用 slow/fast 双时间尺度隔离更新，但均未在 Actor-Judge 共参数场景下验证 Judge 校准稳定性。本文专门设计 Dual-Adapter 架构解决物理参数污染问题。
+ ⚡ 
+ Problem Formulation · 防审稿人质疑
+ 精准界定现状：为什么"外部静态规则"不可持续，而"直接换 Self-Judge"会翻车？
+ 为避免审稿人批评"稻草人谬误"，本文在 Introduction 中精准界定当前 2025–2026 文献分裂出的 两条互不交叉的平行线（The Orthogonal Blindspot） ，并剖析两套路线的各自死因：
+ 路线 A：现有 Continual RL（100% 依赖外部免维护静态规则）
+ 代表：RFT-CPT (7个VQA精确匹配)、Berkeley 2607.07847 (GT标签)、ACLArena (环境确定性反馈)。
+ 可扩展性瓶颈（Scalability Bottleneck）： 真实持续部署中（如新网页结构、复杂工具组合），不可能实时为每个新任务编写完备的 Python 单元测试或 SymPy 校验器。
+ 极端稀疏性导致可塑性饥饿（Plasticity Starvation）： 静态规则仅在末尾给 0/1 结果奖励。进入全新阶段初始成功率接近 0% 时，GRPO 采出的 rollout 全为 0 分，优势函数归零，模型完全学不动。
+ 路线 B：直接将外部规则替换为共参数 Self-Judge（三大灾难）
+ 代表：将 Self-Rewarding LMs / RLAIF 直接放入多阶段连续任务流。
+ ① 裁判子空间污染（Judge Subspace Pollution）： Stage 2 的 Actor RL 梯度改写共享权重，导致模型先忘了"怎么评判 Stage 1 的对错"（ECE 暴涨），反过来用错误信号加速摧毁旧技能。
+ ② 迎合式协同坍缩（Sycophantic Co-adaptation）： 共参数 Judge 对自身生成的特定格式产生高置信度偏见，导致 r̂_self 虚高而真实 r_gold 倒 U 型坍缩。
+ ③ 新阶段冷启动失明（Cold-start Blindness）： 若为防漂移而死锁旧 Judge，切入新领域（如 Logic→Code）时裁判打分形同掷硬币（AUROC ≈ 0.5）。
+ 核心理论框架与算法架构（Section 2 · Method）
+ 📐 
+ Theoretical Grounding · 三项误差分解
+ 奖励失真分解不等式：为什么 Dual-Adapter + SDFT Warm-up + L2 早停缺一不可？
+ 为消除方法设计的"工程拼凑感"，我们在 Section 2 开篇将第 t 阶段第 k 步的自奖励失真（Total Reward Drift）严格分解为三项独立误差上界，使本文的三个核心组件分别精确消除其中一项：
+ E_{y~π_A}[ |R(θ_J^(t,k)) − R*_t| ]  ≤ 
+ ① ‖R(θ_J^(t,0)) − R*_t‖_{D_t} (Cold-Start OOD Gap)  + 
+ ② ‖∑ (∂R/∂θ_shared)·Δθ_A^(t,j)‖ (Parameter Pollution)  + 
+ ③ √(½ d_KL(π_A^(t,k) ‖ π_A^(t,0)))·L̂_R (Sycophantic Shift) 
+ ① 
+ 消除第 ① 项（Cold-Start OOD Gap）↔ SDFT-bridged Warm-up： 为什么不用 Gold Reward 标签也能校准 Judge？从 Bradley-Terry 偏好模型看，校准 Judge 只需知道新任务分布上的偏序对 (y⁺, y⁻) 。SDFT 未标注示范 y⁺ ~ D_t^demo 天然位于高奖励流形，而旧策略零样本采样 y⁻ ~ π_A^(t-1) 位于次优流形——用 (y⁺, y⁻) 做对比预热，在信息论上等价于在 R*_t 支撑集边界上完成了一次 一阶决策边界对齐（First-order Decision Boundary Alignment） 。
+ ② 
+ 消除第 ② 项（Cross-Role Parameter Pollution）↔ Dual-Adapter 物理隔离： 由于 θ_A ∩ θ_J = ∅ 且 Base W₀ 冻结，交叉雅可比项 ∂R / ∂θ_shared ≡ 0 ，从微积分链式法则（Chain Rule）上直接令第 ② 项恒等于零。
+ ③ 
+ 约束第 ③ 项（On-Policy Sycophantic Shift）↔ EMA 跨阶段锚定 + L2 无监督早停： 即使没有梯度污染，Actor 针对固定 Judge 过度优化仍会拉大 d_KL 产生格式迎合。其中经验敏感度常数 L̂_R 直接取自 Pilot Group D 实测的 Judge 梯度范数 （消除无界 Lipschitz 假设），并在 Section 4 与 Group C 实测的 ΔECE_sycophancy 定量比对，形成完整的"理论预测—实验验证"闭环。
+ 📎 
+ Appendix 严谨性说明（交叉项消除）： 通过三角不等式依次插入桥接项 R(θ_J^(t,0)) 与初始分布期望，并利用"先完成阶段入口 Warm-up 固定 θ_J^(t,0) 、再启动在线 RL 步 k "的时序解耦设计，原本的二阶交叉项 O(‖Δθ_J‖·d_KL) 在单阶段内严格归零，跨阶段余项可归入有界常数。
+ ⚙️ 
+ Algorithm · Frozen Base + Dual-Adapter Routing
+ 物理隔离架构：Actor Adapter θ_A ⊕ Judge Adapter θ_J
+ 冻结预训练 Base Weights W₀ ，挂载两套正交职责的 LoRA 模块。
+ 无论 Actor 的 RL 梯度将生成分布扭曲成何种形态，Judge 看到的底层表征永远是干净的 W₀ + ΔW(θ_J) ，
+ 从物理上斩断 Actor 梯度对 Judge 表征的直接污染。两套 LoRA 合计 <400MB，比存两个 7B 模型省约 14GB 显存。
+ Actor Adapter θ_A
+ A Rank r_A = 64，挂在全部 Linear 层 前向 Rollout 时只激活 W₀ + ΔW(θ_A) 
+ A 反向只接收 GRPO 策略梯度 完全可塑（High Plasticity），自由探索新任务
+ A Base Weights W₀ 全程冻结 Actor 梯度永远写不进 base，Judge 子空间物理隔离
+ Judge Adapter θ_J
+ J Rank r_J = 32，独立参数空间 打分时卸载 θ_A，只激活 W₀ + ΔW(θ_J) 
+ J 仅在两个时刻更新 ① 每阶段 Cold-start Warm-up；② 跨阶段 EMA 慢速合并
+ J EMA 合并公式 θ_J^(t) ← α·θ_J^(t-1) + (1-α)·θ_J,warm^(t) 锚定历史校准分布
+ ⚠️ 
+ 工程确认（最高优先级）： 推理时 Actor/Judge LoRA 切换在 vLLM 是 request-level，verl 框架下需确认是否支持 per-forward multi-LoRA 切换。若不支持，需自行实现 adapter switching hook，留出工程时间，先于第一次实验确认。
+ 🌱 
+ Algorithm · SDFT-bridged Judge Warm-up
+ Cold-start 机制：每阶段入口处的 Judge 冷启动（~15 分钟）
+ EMA 只能防止旧 Judge 变坏（防 Backward Drift），但进新阶段时旧 Judge 根本不懂新任务格式（无 Forward Plasticity）。
+ Cold-start 机制不依赖新任务的 Gold Reward 标签——只需极少量未打分示范 D_t^demo （N = 100–200 条，SDFT 标准设定）。
+ 1 
+ Constructive Contrast（自构造正负对比） 用进入阶段 t 前的旧 Actor 对这 100 条题目采样 K=4 条 rollout，天然作为 sub-optimal / negative 样本； D_t^demo 中的 demonstration 作为 positive 样本，配对组成对比数据。
+ 2 
+ Rubric-grounded Judge Warm-up（约 50–100 步） 只更新 Judge Adapter θ_J，让 Judge 学会区分"旧策略对新任务的生疏输出"与"新阶段标准格式/示范"；同时用 SDFT 的 reverse-KL 约束防止破坏前 t-1 阶段的判别分布。
+ 3 
+ Stage 3 (Code→Math) 边界条件 旧 Actor 在 Math 上可能产生"看起来有道理但答案错"的 ambiguous negative，会污染 warm-up 信号。仅在此阶段的 warm-up 中，允许用 Gold Oracle 过滤 rollout（只保留 Oracle 明确判为错误的样本作为 negative）。这是唯一允许在训练期间看 Oracle 的位置，时机是 warm-up 阶段而非主训练，审稿人可接受。
+ ✅ 
+ 实验对照价值： 可在图上干净分离三条曲线——① 纯 EMA Judge（死于 Cold-start 瞎打分）→ ② 只加 Warm-up 不做参数隔离（初期准，随后死于 Actor RL 梯度污染）→ ③ 完整方案（既能冷启动，又不漂移）。
+ 🔒 
+ Evaluation · Double-Blind Protocol
+ 三层信号完全隔离：杜绝 Gold Oracle 间接泄漏
+ 只要在训练期间用 Oracle 结果做早停或选超参，审稿人就会判定为 Test-set Leakage / Oracle-assisted tuning。三层隔离协议写入论文 Experimental Setup 小节。
+ L1 
+ Training Loop（在线训练层） 100% 由 Judge Adapter θ_J 打出的 r̂_self 驱动 GRPO。无任何外部 Oracle 参与。
+ L2 
+ Hyperparameter & Early-Stopping（超参/早停层——无 Oracle） 只看两个无监督内部监控指标：① Self-Reward Entropy/Saturation ：当 θ_J 对 rollout group 的奖励方差坍缩（出现 reward hacking 饱和征兆）；② Anchor Consistency（Kendall's τ） ：在每阶段开头存下的 100 条 Cold-start 样本上，当前 θ_J 打分与初始 θ_J^(t,0) 打分的 Kendall's τ 秩相关跌破阈值。 注：Kendall's τ 曲线本身可作为 Section 4 Analysis 的独立子图，展示 Judge 校准稳定性随阶段推进的变化。 
+ L3 
+ Post-hoc Blind Audit（事后盲测层——Gold Oracle） 仅当 L2 协议跑完所有阶段、固定唯一最终 Checkpoint 序列后，才调用外部规则验证器（SymPy / Code Executor / Constraint Checker）一次性跑出真实准确率 r_gold 和 ECE。训练期间的任何决策均未使用此结果。
+ 4 阶段可验证异质任务流
+ 🗂️ 
+ Benchmark Design
+ 4-Stage Verifiable Heterogeneous Stream
+ 每个阶段同时满足：① 100% 具备确定性程序 Oracle（客观真值，无需 LLM 评判）；② 四阶段技能真正异质（产生严重遗忘和跨阶段冲突）；③ 能清晰解释"为什么训练时用 Self-Judge 而不用 Oracle"。
+ 统一论证框架： "我们假设 training-time oracle 不可用（昂贵、专有或反馈延迟），这是真实 post-training 部署中的常态；oracle 仅用于事后科学评估。" 
+ 阶段
+ 任务领域
+ 数据集
+ 事后盲测 Gold Oracle
+ 为什么训练时用 Self-Judge？
+ Stage 1 
+ Symbolic & Deductive Logic 
+ 符号与逻辑推理 
+ ZebraLogic / RuleTaker / BigBench Hard (Logical Deduction)
+ 精确约束求解器匹配
+ Exact constraint / truth-table solver 
+ 规则求解器只能给最终 0/1 结果（极度稀疏），Self-Judge 提供步骤合理性 / Process 稠密信号。
+ Stage 2 
+ Code Generation 
+ 代码生成与算法 
+ MBPP+ / LiveCodeBench 精选子集
+ 隐藏单元测试沙箱执行
+ Pass@1 on hidden test suite 
+ 模拟真实部署中"训练期没有完备单元测试集（test cases 昂贵），只能靠模型自审代码逻辑"的场景。
+ Stage 3 
+ Mathematical Reasoning 
+ 数学推导 
+ MATH-500 / GSM-Symbolic
+ SymPy + Math-Verify 符号等价性检查
+ 测试从程序语法（Stage 2）切到数学公式（Stage 3）时的格式覆盖与 Judge 漂移。
+ ⚠ warm-up 阶段允许 Oracle 过滤 ambiguous negative（唯一例外） 
+ Stage 4 
+ Verifiable Constraint Following & Structured Tool Call 
+ 可验证约束遵循与工具调用 
+ IFEval（25 类可编程验证约束）+ BFCL AST（Berkeley Function Calling 语法树匹配）
+ 100% 确定性 Python 规则脚本 + AST 语法树精确解析器
+ 无需 LLM 评判 
+ IFEval + BFCL 表面上是开放生成 / Agent 工具调用（传统依赖 LLM-Judge），但底层拥有完全确定性的规则验证代码。完美桥梁：保住任务异质性，同时确保 Gold Oracle 完全客观。
+ Pilot 因果诊断实验（Section 3 · Motivation）
+ 🔬 
+ 2-Stage Controlled Pollution Pilot
+ 两阶段受控污染诊断：一锤定音证明 Actor 梯度污染 Judge 子空间
+ 在 8 × H800 上只跑 Stage 1 (Logic) → Stage 2 (Code)，约 4.5 小时。为严格区分 Subspace Pollution（梯度冲坏裁判参数） 与 Sycophantic Co-adaptation（无梯度干扰下的纯输出格式迎合） ，设计 内外双探针（Dual-Probe Diagnostic） ：
+• P_ext （外来静态探针）：由 Stage 1 结束时的 Actor 冻结快照 W₀ + ΔW(θ_A^(1,end)) 生成的 500 条固定 Stage 1 回答（与 Judge 在 Stage 1 校准时的输入分布完全对齐且静止，避免 W₀ 裸模型带来的额外分布偏移；若 Stage 2 期间 ECE 上升则 100% 归因于参数污染）；
+• P_on-policy （同源动态探针）：由当前训练中的 Actor 实时采样的回答（同时反映参数污染 + 格式迎合）。
+ 组别
+ 配置
+ 目的
+ 预期现象
+ Group A 
+ Actor + Judge 共用同一 LoRA（r=64）
+ 标准 Self-Rewarding 基线 
+ 建立 baseline 污染曲线
+ Stage 2 训练推进时，P_ext 与 P_on-policy 上的 ECE 同时单调飙升、AUROC 单调下降
+ Group B 
+ 共用 LoRA，Rank 从 r=8 → 32 → 128 递增
+ Rank-Scaling Ablation 
+ 验证：共享可塑子空间越大，污染越快
+ P_ext 上 ECE 上升斜率与 Rank 严格正相关，定量支持"可塑子空间越大干扰越强"
+ Group C 
+ Dual-LoRA 物理隔离：Stage 2 只更新 θ_A，评测时切回 θ_J
+ 验证物理隔离有效性 + 剥离纯 Sycophancy 分量 
+ 2×2 精确归因： 外来静态探针 P_ext 上 ΔECE 统计上不可区分于 0（within noise floor, |ΔECE| < 0.005, p > 0.05） ，证明消除参数污染；而当前阶段 P_on-policy 后期出现的轻微 ECE 上升，则干净剥离出纯分布偏移（ ΔECE_sycophancy ）
+ Group D 
+ Diagonal Fisher + Gradient Dot Product 
+用 Judge 在 P_ext 上 calibration loss 的 per-parameter squared gradient 定义"Judge 敏感方向"并估算经验常数 L̂_R ；计算 Actor GRPO 梯度与该向量的余弦相似度（两次额外 backward pass，~30 min）
+ 直接可视化因果链：梯度冲突峰值 ↔ P_ext ECE 飙升时刻对齐 + 提供 L̂_R 实测值
+ 梯度冲突余弦相似度曲线与 P_ext ECE 上升曲线高度对齐，且输出的经验范数 L̂_R 直接代入 Section 2 理论公式第 ③ 项
+ ⚠️ 
+ Group D 计算方案降级说明： 完整 FIM 特征向量分解对 7B 模型计算量不可接受。改用 diagonal Fisher 近似（per-parameter squared gradient），等价于多任务学习文献中的 gradient conflict metric（PCGrad 所用方法），计算量仅需两次额外 backward pass。审稿人不会有异议。
+ 预期实验结果与核心图表规划（Section 4 · Expected Results）
+ 📊 
+ Main Table & Diagnostic Curves
+ 4 阶段连续训练后的预期梯队对比（事后 Gold Oracle 盲测）
+ 在跑完 Stage 1 (Logic) → Stage 2 (Code) → Stage 3 (Math) → Stage 4 (IFEval/BFCL) 后，调用 L3 事后盲测 Gold Oracle 一次性评测真实准确率与校准误差。预期呈现如下清晰的性能梯队（以 Qwen2.5-7B 为基准的趋势预测）：
+ 方法配置
+ 新任务获取
+ (Forward Avg Acc ↑) 
+ 旧任务遗忘率
+ (Forgetting Measure ↓) 
+ 裁判校准误差
+ (Final Avg ECE ↓) 
+ 核心死因 / 优势诊断
+ 1. Sequential SFT 
+ ~52%
+ −12% ~ −15%
+ N/A
+ Off-policy 强制模仿覆写旧权重（复现 RFT-CPT 基线结论）。
+ 2. Shared Self-Rewarding GRPO 
+ 共参数 LoRA r=64 
+ ~55%
+ −9% ~ −11%
+ > 0.25
+ 核心发现：GRPO 抗遗忘红利缩水 75%！ 揭示 GRPO 的抗遗忘优势高度依赖 Oracle 质量：仅靠 on-policy 采样保留微弱优势，失去完美 Oracle 后红利从 FM −2.3% 恶化至 −9%~−11%，退化回接近 SFT 的水平。
+ 3. Frozen / Pure-EMA Judge GRPO 
+ 无 Cold-start Warm-up 
+ ~46%
+ −3% ~ −4%
+ (因未学进新任务) 
+ > 0.30
+ (新阶段失明) 
+ 死于 Cold-start Blindness ：旧裁判不懂新阶段格式（AUROC ≈ 0.5），从第一步就用噪声奖励误导 Actor。
+ 4. Warm-up Only (Shared Adapter) 
+ 有冷启动，无物理隔离 
+ ~56%
+ −8% ~ −9%
+ ~0.20
+ 解决了阶段入口的冷启动，但进入在线 RL 后迅速死于 Actor 梯度对共享子空间的污染。
+ 5. Ours (Dual-LoRA + SDFT Cold-start + EMA) 
+ ~62% – 65%
+ −2% ~ −3%
+ < 0.08
+ 逼近 Oracle Upper Bound！ 证明无需训练期外部规则，仅靠物理隔离与 SDFT 冷启动即可恢复在线 RL 的抗遗忘红利。
+ Oracle-Guided GRPO (Upper Bound) 
+ 训练期直接使用外部 Gold Oracle 
+ ~66% 
+ −1.8% ~ −2.3% 
+ 0.00 (Oracle) 
+ 理想上限参照（对应 RFT-CPT 在有完美外部验证器时的表现）。 
+ 📈 Figure 3 预期：Proxy-Gold Gap 曲线 & 理论第 ③ 项定量验证
+ 1) 绘制自评分数 r̂_self 与真实得分 r_gold 对比： Shared Baseline 出现过优化倒 U 型坍缩，而 Ours 同步上升（Proxy-Gold Gap 缩小 60%+）。
+ 2) Theory–Experiment 闭环验证： 将 Group D 实测的 L̂_R 与训练期策略 d_KL 代入 Section 2 公式第 ③ 项，与 Group C 实测剥离出的 ΔECE_sycophancy 直接对比，展示理论预测曲线包络实测漂移轨迹。
+ 🧭 Figure 4 预期：L2 无监督早停与归一化容错窗口（% Budget）
+ 为消除不同阶段总训练步数 T_stage 差异，将触发时刻 t_trig 相对真实峰值 t* 的偏差 归一化为单阶段训练预算百分比 Δτ = (t_trig − t*) / T_stage ：
+• Early Warning [−15%, 0%] budget ：理想预防区间（崩溃前刹车）；
+• Prompt Detection (0%, +5%] budget ：可接受即时响应区间（回落 <1%）；
+• Lagging (>+10% budget) ：判定为监控滞后失效。
+ 立即行动清单
+ 【最高优先】确认 verl / vLLM 的 multi-LoRA per-forward 切换支持 这决定 Dual-Adapter 方案能否干净实现。若不支持，需在第一次实验前自行实现 adapter switching hook。先于所有其他实验进行。
+ 【最高优先】准备 Stage 1 数据集（ZebraLogic / RuleTaker / BigBench Logical Deduction） Pilot 实验的起点是 Stage 1 → Stage 2，数据集需要在 Pilot 启动前就位。同时准备 Stage 1 结束时的 500 条 P_probe 样本构造脚本。
+ 运行 Pilot 实验（约 4 小时，8 × H800） 只跑 Stage 1 → Stage 2，四组对照（A/B/C/D）。目标是在论文 Section 3 得到"梯度冲突峰值 ↔ ECE 飙升"的对齐图，作为整篇 paper 的 motivation。
+ 在 Introduction 写入统一"为什么用 Self-Judge"论证 四个阶段各自的理由用统一框架收束： "training-time oracle 不可用是真实 post-training 部署的常态；oracle 仅用于事后科学评估。" 
+ 设计 Kendall's τ 曲线作为独立分析图（Section 4） 不只是早停协议里的一行描述，而是展示 Judge 校准稳定性随阶段推进变化的可视化，结合 ECE 曲线对比三组对照条件（A / C / 完整方案）。
+ 补充阅读 Scaling Laws for Reward Model Overoptimization（Gao et al. 2022） 提供 proxy-gold gap 随 KL 增大的标准曲线，作为 paper 中 reward drift 量化的对照框架。
+ 确认 Stage 3 (Math) warm-up 的 Oracle 过滤脚本 只在 warm-up 阶段调用 SymPy/Math-Verify 过滤 ambiguous negative rollout。需要有独立脚本，且只在这一个时机调用，不污染主训练 loop。
+ 核心引用文献
+ RFT Naturally Mitigates Forgetting in CPT 
+ Lai et al. · HKISI/CAS · arXiv 2507.05386
+ 直接基石：GRPO FM −2.3 vs SFT FM −10.4，确立 on-policy RL 主骨架。
+ When Does Continual Learning Require Learning 
+ Harrington et al. · UC Berkeley · arXiv 2607.07847
+ 在线 RL 最适应离散知识变化但极度依赖奖励质量，直接催生 Reward Drift 关注。
+ Self-Distillation Enables Continual Learning (SDFT) 
+ Shenfeld et al. · MIT · ICML 2026 Spotlight
+ On-policy 自蒸馏的 dense signal；SDFT-bridged Cold-start 机制直接借用其设定。
+ ACLArena: Agent Continual Learning 
+ Wang et al. · UCLA · arXiv 2609.23989
+ 多阶段异质 RL 参数残差冲突诊断；Dual-Adapter 架构的工程参照。
+ Self-Rewarding Language Models 
+ Yuan et al. · Meta · arXiv 2401.10020
+ 单任务静态 Self-Rewarding 基线；本文打破其"静态分布"假设，置于连续任务流。
+ Scaling Laws for Reward Model Overoptimization 
+ Gao et al. · Anthropic · arXiv 2210.10760
+ Proxy-gold RM gap 随 KL 增大的标准曲线，reward drift 量化的对照框架。
+ Continual Learning via Sparse Memory Finetuning 
+ Lin et al. · FAIR / UC Berkeley · arXiv 2510.15103
+ 遗忘从 89% 降至 11%；参数更新局部化原则的直接证据。
+ DeepSeek-R1 / GRPO 
+ DeepSeek · arXiv 2025
+ 在线 RL 训练框架基础；Actor 侧 GRPO 实现的直接参照。

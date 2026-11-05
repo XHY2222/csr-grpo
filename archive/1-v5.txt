@@ -1,0 +1,292 @@
+ Judge-Policy Dual Drift · Paper Plan 
+ 8 × H800 · Continual Post-Training · Post-Review Hardened Design (v5 Final)
+ Judge-Policy Dual Drift in Continual Self-Rewarding RL
+ 经三轮审稿人视角压力测试后的终极执行蓝图。全面落地"受控科学实验台"定位、 Acc_rank 主指标、 正负例对称 W₀ 改写（防 Δr_canon 误报） 、 跨阶段 Replay TOST 等价检验 、共识门槛（≥5/8 Quorum）与真实 RL 算力预算。
+ 目标：ICLR / ICML / NeurIPS 
+ 模型：Qwen2.5-7B-Instruct + Llama-3.1-8B-Instruct 
+ 架构：Frozen Base + Dual-LoRA (Fisher Spectrum m=1.0) 
+ 真实算力：~64–80 GPU·hrs/run · 总计 ~1,150 H800·hrs (8卡约6天) 
+ Paper 核心主张与精确 Framing
+ 受控科学实验台：持续流中自奖励 RL 的裁判-策略双重漂移量化归因与零 Oracle 恢复
+ 前人持续 RL 工作（RFT-CPT、ACLArena）证明 GRPO 具备强抗遗忘性，但均依赖 外部不随参数漂移的确定性规则（Stationary External Oracle） ；而现有自奖励/同底座共演化工作（Self-Rewarding LMs、Shafayat et al. 2025、CURE）仅在 单任务静态分布 下讨论。
+ 本文聚焦 跨阶段异质持续任务流（Continual Heterogeneous Stream） 这一正交盲区，构建具备确定性事后真值的受控科学实验台（Controlled Scientific Testbed），首次对共享参数下的裁判退化做 2×2 精确归因（参数污染 Subspace Pollution vs. 格式迎合 Sycophantic Hacking） 。我们提出轻量化三组件方案—— ① Dual-Adapter 物理隔离（作为 Fisher-Mask 连续谱的极限端点，继承 PPG 谱系）+ ② Replay-Grounded Contrastive Warm-up（含规则扰动与自一致性 Hard Negatives）+ ③ L2 Canonicalization 早停 ——在完全零训练期 Oracle 接触下恢复 GRPO 的抗遗忘与前向学习红利。
+ 受控科学实验台 Framing 
+ 主指标：组内排序精度 Acc_rank + 有效对覆盖率 
+ Fisher-Mask 连续谱 (m∈[0,1]) 因果干预 
+ Replay Warm-up + 双路线 Hard Negatives 
+ L2 Canonicalization 改写敏感度早停 
+ Qwen + Llama 双家族 × 3 Seeds × TOST 检验 
+ 📚 
+ 文献谱系与诚实定位
+ 主动挂靠经典谱系，收敛"首次"边界
+ ① 
+ PPG (Cobbe et al. 2020) & 独立 RM 谱系 主动声明 Dual-Adapter 在功能上继承深度 RL 的 Phasic Policy Gradient（解耦共享 trunk 的策略与价值干扰），将其定位为"Fisher-Mask 连续谱的 100% 极限点与参数高效实现"，而非凭空发明隔离。
+ ② 
+ RFT-CPT (2507.05386) & Berkeley (2607.07847) 确立 GRPO 在有外部静态 Oracle 时优于 SFT，但极度依赖奖励排序质量。我们将"失去完美 Oracle 后 GRPO 抗遗忘红利大幅退化"明确列为待检验假设 H1 。
+ ③ 
+ WARM (Ramé et al. 2024) & ACLArena (2609.23989) 引用 WARM 的权重平均 RM 思想，指出跨异质阶段直接做 LoRA EMA 存在双线性交叉项误差与残差冲突，从而论证用 Replay-based Warm-up 替代 EMA 的必要性。
+ ④ 
+ Shafayat et al. (2025) / Shao et al. (2025) / Panickssery (2024) 正面引用近期自训练坍缩、Qwen 伪奖励（Spurious Rewards）与自偏好偏见（Self-Preference Bias）文献，将本文核心增量精准锁定在 "跨阶段异质任务流中的 2×2 漂移归因与无 Oracle 恢复" 。
+ 🎯 
+ Problem Formulation · 消除动机矛盾
+ 受控科学实验台 & 组内排序失真
+ F1 
+ 为什么在有确定性验证器的 4 个任务上不用训练期 Oracle？ 不再宣称"模拟没有验证器的真实部署"，而是定位于 受控科学实验台（Controlled Scientific Testbed） ：正如研究噪声标签学习需在有真值的 CIFAR 上人工注入机制一样，我们必须利用具备 100% 确定性程序真值的异质任务作为 事后显微镜（Post-hoc Microscope） ，才能无争议地计算 Proxy-Gold 排序偏差。
+ F2 
+ 为什么主指标是组内排序精度 Acc_rank 而非 ECE？ GRPO 依赖组内相对优势 Â_i = (r_i − μ_r)/σ_r 。若 Judge 整体偏高 +0.3，ECE 极差但对 GRPO 毫无影响；反之若组内发生 排序倒置（Ranking Inversion） ，策略梯度直接反向。因此全文以 Acc_rank （伴随报告有效对覆盖率 Valid-Pair Coverage 与组内 Spearman's ρ ）为主指标， Reward Spread (σ_r) 与 ECE 为辅。
+ F3 
+ 诚实命名架构实质 由于 Judge 在阶段内冻结且由少量未标注 Demo 对比预热，本文方法实质是 Demo-Grounded Lightweight GenRM + Continual GRPO + Self-Diagnostic Early Stopping ，避免过度绑定"Judge 随 Actor 自举变强"的狭义自奖励标签。
+ 核心概念框架与极简三组件架构（Section 2 · Method）
+ 📐 
+ Conceptual Error Decomposition · 概念性分解（非定理包装）
+ 组内排序失真的三源概念分解：三大核心组件的一一映射
+ 采纳审稿建议，我们将原公式明确界定为指导实验设计的 概念性分解框架（Conceptual Decomposition Framework） 而非形式化数学定理，将第 t 阶段第 k 步 Judge 在组内的排序失真（Ranking Inversion Risk）归结为三类机制来源，并精简方法为三个核心组件（砍掉默认 EMA，消除"Kitchen Sink"堆砌感）：
+ RankingError(θ_J^(t,k), π_A^(t,k))  ≈ 
+ ① Cold-Start Decision Boundary Misalignment  + 
+ ② Cross-Role Parameter Pollution (m < 1)  + 
+ ③ On-Policy Format Sycophancy (Δr_canon) 
+ ① 
+ 应对来源 ①（冷启动判别失明 + 跨阶段遗忘）↔ 组件 1：Replay-Grounded Contrastive Warm-up 每阶段入口用 100–200 条未打分 Demo 构造正例，结合 "规则扰动 + Base 平滑"与"自一致性少数派"双路线 Hard Negatives 构造负例，并 直接重放历史阶段对比对（每阶段仅百余条，耗时 <3 分钟） 。直接替代有损且引入超参 α 的 LoRA EMA！
+ ② 
+ 应对来源 ②（跨角色参数干扰）↔ 组件 2：Fisher-Masked 连续谱与 Dual-Adapter (m=1.0) 在共享参数（ m < 1 ）下，Actor 梯度沿着 Judge 高 Fisher 敏感坐标写入，导致排序退化率随共享可塑容量和步数增长；Dual-Adapter 对应坐标掩码比例 m = 1.0 的完全解耦极限端点。
+ ③ 
+ 应对来源 ③（同阶段格式迎合）↔ 组件 3：L2 Canonicalization 早停协议 即使物理隔离了参数（ m = 1.0 ），Actor 仍会通过迎合固定 Judge 的表面文风偏见来刷分。通过监控组内 Reward Spread (σ_r) 、自偏好超越率 ρ_over 与 去格式改写敏感度 Δr_canon ，精准识别并截断格式投机。
+ ⚙️ 
+ Component 1 · GenRM Interface & Dual-Adapter Spectrum
+ 确定性 GenRM 打分接口 + Dual-Adapter 物理隔离架构
+ GenRM 连续概率输出（消除采样噪声）
+ R Greedy Rubric CoT + Logit 差值 Judge 采用 temperature = 0 贪心解码生成简短判据（上限 192 tokens ），末尾输出 Verdict: [[Yes]] / [[No]] ，取最后一层 logit 计算连续奖励： r(x,y) = σ(z_Yes − z_No) ∈ (0,1) 。彻底消除采样随机性对 GRPO 组内方差的干扰。
+ R Response-Level 统一粒度 + No-CoT 消融 全 4 阶段统一为 response-level 打分（撤回"Stage 1 step-level process RM"的不一致承诺）；在 Ablation 中对比 Direct-Logit (0 CoT) 以量化推理开销（约 1.6× rollout 耗时）与排序精度的权衡。
+ Frozen Base W₀ + θ_A (r=64) ⊕ θ_J (r=32)
+ A Actor Adapter θ_A (r_A = 64) 前向采样激活 W₀ + ΔW(θ_A) ，反向仅接收 GRPO 梯度；阶段内完全可塑。
+ J Judge Adapter θ_J (r_J = 32) 打分时卸载 θ_A，激活 W₀ + ΔW(θ_J) 。阶段内完全冻结，仅在阶段切换处通过 Replay Warm-up 更新（EMA / Growing-Rank SVD Merge / Per-stage Expert + MLP Router 全部降为 Ablation）。
+ 🔧 
+ 工程接口说明（vLLM Request-level Multi-LoRA）： vLLM 原生支持同一 batch 内通过不同 LoRARequest 分别调用 θ_A （生成 rollout）与 θ_J （独立打分请求），FSDP 训练侧仅需挂载 θ_A ；真正需在动手前花半天核对的是 verl 的 rollout → reward_fn 回调接口传递不同 lora_int_id 的胶水代码。
+ 🌱 
+ Component 2 · Replay-Grounded Contrastive Warm-up
+ 攻克"风格与改写痕迹 Shortcut"：正负例对称 W₀ 改写 + 共识门槛负例 + 历史重放
+ 修复二审发现的致命隐蔽 Shortcut： 若仅对规则扰动负例做 W₀ 平滑改写而正例保持原始 Demo，Judge 会立刻学会"凡带 W₀ 改写口音的皆为负例"，且会导致 L2 的 Δr_canon （同样调用 W₀ 改写）在每阶段 100% 误报！因此我们强制引入 正负例对称 W₀ 改写（Symmetric Paraphrasing） ：
+ 1 
+ 路线 A：分域规则扰动 + 正负例对称 W₀ 改写（Symmetric Paraphrase Augmentation） 对 D_t^demo （150 条）施加领域特定逻辑破坏生成负例并经冻结 Base W₀ 重写平滑； 同时强制将正例 Demo 也以 1:1 比例经过同一个 W₀ 做保持语义的重写（即正例池 = 原始 Demo y⁺ ∪ 改写版 Demo ỹ⁺ ，标签均为 1） 。从信息论上令"W₀ 改写风格"与正负标签完全正交！
+ 2 
+ 路线 B：带共识门槛的自一致性少数派负例（Quorum-Gated Minority Rollouts，零 Oracle） 针对低起点阶段多数派本身可能出错的风险，采样 K=8 条 rollout 后设立 共识门槛（Quorum Gate ≥ 5/8） ：仅当最大一致簇占比 ≥ 5/8 时才采信偏离簇作为负例；未达门槛的题目仅使用路线 A。事后在 L3 用 Gold Oracle 统计并如实报告这批负例的 真实标签噪声率（Post-hoc False-Negative Rate） 。
+ 3 
+ 跨阶段防遗忘与 TOST 检验：直接 Replay 历史对比池（替代 LoRA EMA） 阶段 t 预热时按 1:1 混合重放阶段 1…t−1 存下的对比对（耗时 <3 分钟）。 将 TOST 等价检验精准部署于此： 检验 θ_J^(t-1,end) 与刚完成阶段 t 预热后的 θ_J^(t,0) 在旧阶段静态探针 P_ext 上的 Acc_rank 差异是否在 δ = ±2.0% 等价边界内（验证假设 H4 ）。
+ 4 
+ 事后盲测三项 AUROC 验证（仅在 Pilot / L3 报告，绝不进训练 Loop） 
+• Correctness-AUROC ：同格式下区分 (Correct, Incorrect) （目标 > 0.80）；
+• Style-AUROC ：同为正确下区分 (Human Demo, 模型自然正确输出) （目标 ≈ 0.50）；
+• Rewrite-Invariance AUROC （新增）：区分 (原始正确回答 y⁺, W₀ 改写后正确回答 ỹ⁺) （目标 ≈ 0.50，直接证实 Δr_canon 探针无系统偏见）。
+ 🔒 
+ Component 3 · Double-Blind Protocol & Demo-Calibrated L2 Early Stopping
+ 三层盲测隔离 + 基于阶段初 Demo 自标定阈值的 Δr_canon 早停协议
+ 在正负例对称 W₀ 改写消除了系统性偏见后，我们进一步消灭"拍脑袋定早停阈值"的泄漏隐患，采用 阶段初 Demo 零样本自标定规则（Demo-Baseline Calibration） ：
+ L1 
+ Training Loop（在线训练层） 100% 由阶段内冻结的 θ_J 输出 r̂_self 驱动 GRPO，零外部 Oracle 参与。
+ L2 
+ Unsupervised Self-Diagnostic Early Stopping（每 15 步检测一次，零人工调阈值） 
+① 阶段初基线自标定（k = 0 时执行一次）： 在刚完成 Warm-up 的 θ_J^(t,0) 上，对当前阶段 150 条原始 Demo y⁺ 及其改写版 ỹ⁺ 计算初始改写敏感度均值 μ_demo 与标准差 σ_demo （此时 k=0 绝无 RL 迎合），自动锁定当前阶段早停阈值为 τ_canon^(t) = μ_demo + 2·σ_demo ；
+② 在线联合判据（k > 0）： 在 100 条锚点题上监控组内标准差 Reward Spread σ_r(k) 、超越 Demo 比例 ρ_over(k) 与去格式跌落值 Δr_canon(k) = E[r(y_actor) − r(ỹ_actor)] 。当 ρ_over > 0.80 且 Δr_canon(k) > μ_demo + 2·σ_demo （或 σ_r 跌破初始值的 25%）时触发早停。
+ L3 
+ Post-hoc Blind Audit（事后盲测层——Gold Oracle） 所有训练与早停完成后，调用确定性程序验证器一次性算出真实准确率 r_gold 、组内排序精度 Acc_rank （及 Valid-Pair Coverage ）、 Spearman's ρ 与三项 AUROC。
+ 4 阶段可验证异质任务流与零 Oracle 负例构造细则
+ 🗂️ 
+ Benchmark & Zero-Oracle Negative Construction
+ 彻底废除 Stage 3 Oracle 特权 · 精确界定数据集来源与共识门槛（≥ 5/8 Quorum）
+ ① 全 4 阶段 100% 零训练期 Oracle 接触；② Stage 1 以 ZebraLogic + BBH-Logic 为主（对 Instruct 已接近饱和的 RuleTaker 降权仅作格式预热）；③ Stage 4 采用 IFBench (AI2 2025) 或自建 IFEval ≥3 组合约束子集 + BFCL-v3 Multi-Turn ，各阶段初始准确率标注为 Step 0 待实测校准值 。
+ 阶段
+ 任务领域与数据集（起点待 Step 0 实测）
+ 事后盲测 Gold Oracle (L3)
+ 路线 A：分域规则破坏算子 (+正负例对称 W₀ 改写)
+ 路线 B：带 ≥5/8 共识门槛的自一致性少数派
+ Stage 1 
+ Symbolic & Deductive Logic 
+ZebraLogic (主) + BBH-Logic
+ 预估起点 ~15–25% (Step 0 实测) 
+ 精确约束求解器匹配
+ Exact truth-table solver 
+ 随机翻转/删除 1 条前提条件，或对调推导链末端的实体属性映射；正例 Demo 与破坏负例均以 1:1 经 W₀ 重写
+ 采样 K=8 条，按最终推理出的实体网格投票；仅当最大簇 ≥ 5/8 时取偏离解（事后报告真实标签噪声率）
+ Stage 2 
+ Code Generation 
+MBPP+ / LiveCodeBench 精选集
+ 预估起点 ~45–55% (Step 0 实测) 
+ 隐藏单元测试沙箱执行
+ Pass@1 on hidden tests 
+ 循环边界偏移（ < 改 <= 、索引 +1 ）、if 分支条件取反、返回值变量替换（+对称 W₀ 注释/命名改写）
+ CURE 式自生成输入测试： 模型自写 3 个简单合法输入，沙箱运行 K=8 个候选代码，输出一致簇 ≥ 5/8 时取偏离代码
+ Stage 3 
+ Mathematical Reasoning 
+MATH-500 / GSM-Symbolic
+ 预估起点 ~50–60% (Step 0 实测) 
+ SymPy + Math-Verify
+ 符号等价性验证 
+ 篡改中间推导步的正负号/系数或公式常数，向后重算使尾步"表面自洽但结果错误"（+对称 W₀ 句式改写）
+ 采样 K=8 条，提取 \boxed{} 符号化简后投票，最大簇 ≥ 5/8 时取少数派
+ ✓ 已废除 Oracle 过滤特权，100% 零接触 
+ Stage 4 
+ Multi-Constraint & Multi-Turn Tool 
+ IFBench / IFEval-3+Constraints (自建子集) + BFCL-v3 Multi-Turn 
+ 预估起点 ~35–45% (Step 0 实测) 
+ 确定性 Python 约束验证脚本 + AST 语法树精确解析器
+ IFBench/IFEval-3+： 故意破坏 ≥3 条组合约束中的 1–2 条；
+ BFCL： 删减必填参数或替换相近函数名（+对称 W₀ 改写）
+ BFCL： 对规范化 AST 调用序列投票（≥ 5/8 共识门槛）；
+ IFBench/IFEval： 开放文本无单一多数解，100% 由路线 A 规则破坏算子提供负例（协议显式声明）
+ Pilot 因果干预实验与 Step 0 吞吐/效应量预检门（Section 3）
+ 🔬 
+ Step 0 Gate + Fisher-Masked Gradient Spectrum Intervention
+ 消除 Group C 恒等式伪检验 · 锁定共同 KL 覆盖区间 · 统一超参防"调差 Baseline"质疑
+ 🚦 
+ Pilot Step 0（吞吐实测 + 双重效应量预检门 + 反调参偏见声明）： 
+1) 实测单步墙钟吞吐： 在 8×H800 上实测 7B GRPO (G=8) + GenRM (192 tokens) 的单步耗时，据此锁定每阶段步数上限（如 300–400 步/阶段）。
+2) 双重效应门槛与反偏见铁律： 在 Stage 1 → Stage 2 上验证 Shared-LoRA 是否满足 FM < −4.0% 且 P_ext 上 ΔAcc_rank < −8.0% 。若需调大 LoRA Rank (r=128) 或 LR 以显现子空间冲突， Step 0 选定的 Rank/LR/步数对主表全部 8 行严格统一适用（绝不单独把 Baseline 调差） ，且默认配置 (r=64) 的完整结果强制放入 Appendix 备查！
+ 固定 内外双探针 ： P_ext 为由 Stage 1 结束时 Actor 快照 W₀ + ΔW(θ_A^(1,end)) 冻结生成的 500 条固定 Stage 1 回答 ； P_on-policy 为当前 Actor 实时采样回答。执行以下 4 组受控实验：
+ 组别
+ 实验配置（统一 LoRA 参数化）
+ 核心目的与去混杂设计
+ 预期现象与严谨统计判据
+ Group A 
+ Shared Single-LoRA (m = 0%) 
+Actor + Judge 共用同一 LoRA
+ 建立无掩码污染基线（连续谱左端点 m=0% ）
+ Stage 2 推进时， P_ext 与 P_on-policy 上的 Acc_rank 同时显著下跌（>8 pts）
+ Group B 
+ KL-Matched Rank Scaling (检验 H2) 
+共用 LoRA，Rank r ∈ {8, 32, 128} 
+ 精确定义参考分布与对齐区间： 横轴按相对阶段初策略的 KL 散度 d_KL(π_A^(2,k) ‖ π_A^(2,0)) 对齐；由于 r=8 所能达到的最大 KL 较小， 仅在三者共同覆盖的交集区间 [0, d_KL^(min-max)] 内对比斜率 
+ 在共同覆盖的 KL 进度区间内，Rank 越大， P_ext 上的 Acc_rank 退化速率越快（验证 H2）
+ Group C 
+ Dual-Adapter Disjoint (m = 100%) 
+Stage 2 仅更新 θ_A ，评测切回冻结的 θ_J 
+ 移除恒等式伪 TOST，专注剥离纯格式迎合： 因阶段内 θ_J 未动且 P_ext 静态， ΔAcc_rank(P_ext) ≡ 0 由构造恒成立（无需检验）；其核心功能是在零参数污染下观测 Stage 2 P_on-policy 的变化
+ Stage 2 P_on-policy 中后期出现的 Acc_rank 下跌与 Δr_canon 升高，100% 纯净剥离出无梯度污染下的格式迎合分量
+ Group D 
+ Fisher-Masked Gradient Intervention (检验 H3) 
+在 P_ext 上计算 Judge 经验对角 Fisher（每 N=50 步刷新），将 Judge Top- m% （ m ∈ {25%, 50%, 75%, 90%} ）敏感坐标上的 Actor 梯度置零
+ 真正的因果干预 + 连续谱统一框架： 测试阻断敏感坐标梯度是否按比例挽救 P_ext 排序精度，同时观测对 Actor 前向可塑性的影响
+ 画出 m ∈ [0%, 100%] 的 Judge 保持率 vs. Actor 前向准确率帕累托曲线 （验证 H3）
+ 四大显式假设（H1–H4）、主实验对照矩阵与真实算力预算（Section 4）
+ 📊 
+ Hypotheses H1–H4 & Main Comparison Table
+ 显式预注册 H1–H4 假设 · 聚焦型 Seed 分配与 TOST 等价检验部署
+ 📌 显式预注册的四大待检验科学假设（Explicit Hypotheses H1–H4）： 
+ • H1（无隔离失准与红利退化）： 在跨阶段异质流中，共参数自奖励 GRPO（Row 3）因 Judge 子空间被污染导致组内排序倒置，其抗遗忘优势相对 Oracle-GRPO（Row 8）大幅退化。
+ • H2（可塑容量与污染速率单调性 · Group B）： 在共同覆盖的策略 KL 进度区间 [0, d_KL^(min-max)] 内，Judge 在 P_ext 上的排序退化率随共享 LoRA Rank 增大而单调递增。
+ • H3（Fisher 掩码率因果单调性 · Group D）： 坐标级梯度掩码比例 m ∈ [0, 1] 与旧阶段 Judge Acc_rank 保持率呈单调正相关。
+ • H4（跨阶段 Replay 无损保持与上限逼近 · TOST 检验）： ① 跨阶段 Replay Warm-up 前后（ θ_J^(t-1,end) vs. θ_J^(t,0) ）在旧阶段 P_ext 上的 Acc_rank 满足 TOST 统计等价（ δ = ±2.0%, p < 0.05 ） 且不劣于 SVD Merge；② 主表中 Ours（Row 7）与 Oracle Upper Bound（Row 8）的遗忘率 FM 差距进入 TOST 等价区间。
+ 方法配置（全部统一 Step 0 选定的 LoRA 参数化）
+ Seeds 配置
+ 它回答的决定性审稿问题
+ 前向平均准确率
+ (Forward Avg Acc ↑) 
+ 旧任务遗忘率
+ (Forgetting FM ↓) 
+ 组内排序精度
+ (Final Acc_rank ↑) 
+ 单轮耗时
+ (GPU·hrs) 
+ 1. Sequential SFT 
+ 1 Seed
+ Off-policy 模仿下界
+ 低
+ 严重遗忘 (~−12%)
+ N/A
+ ~20h
+ 2. SDFT-Only (No RL) 
+ 仅用每阶段 150 条 Demo 做 MIT SDFT 自蒸馏 
+ 1 Seed
+ 【决定性基线 1】在线 RL 到底有没有必要？ 证明仅靠 150 条 Demo 自蒸馏不够，无标签题目上的 GRPO 探索带来显著前向增量
+ 中等（受限于 Demo 覆盖面）
+ 低遗忘 (~−3%)
+ N/A
+ ~25h
+ 3. Shared Self-Rewarding GRPO (m=0%) 
+ 共参数 LoRA + 阶段入口 Warm-up 
+ 3 Seeds 
+ 【检验 H1 · 核心基线】 失去外部 Oracle 且无隔离时，Actor 梯度污染 Judge 导致排序倒置，GRPO 抗遗忘红利大幅缩水
+ 中等 (~55%)
+ 显著退化 (~−9%)
+ 严重恶化 (~58%)
+ ~72h
+ 4. ICL Few-Shot Judge + Isolated Actor 
+ 不训练 θ_J，检索 k=6 条 Demo/负例放进 Prompt 
+ 1 Seed
+ 【决定性基线 2】80 步 Warm-up 微调有必要吗？ 测试纯 In-Context Learning 能否在异质新阶段充当合格裁判
+ 偏低（复杂逻辑/代码打分不准）
+ 低遗忘 (~−3.5%)
+ 中等 (~66%)
+ ~95h
+ 5. Shared + Judge Co-Training 
+ Meta-Rewarding 式：每步 RL 同步重放 Judge 对比损失 
+ 3 Seeds 
+ 【决定性基线 3 · 最强对手】物理隔离 vs. 边训边 Replay： 
+ *Win-Win 预案：若 Ours 赢，证明物理隔离消除梯度拉锯；若打平，证明 Ours 省去每步额外 Judge Backward，省 35% 算力达同等效果！ 
+ 中高 (~60%)
+ 中低 (~−4.5%)
+ 中高 (~74%)
+ ~110h
+ 6. Shared + Fisher-Mask (m=75%) 
+ 坐标级梯度掩码软隔离 
+ 1 Seed
+ 【决定性基线 4 · 检验 H3】 软隔离 vs. 物理硬隔离，连接 Pilot Group D 连续谱
+ 高 (~61%)
+ 低 (~−3.5%)
+ 高 (~77%)
+ ~76h
+ 7. Ours (Dual-Adapter m=100% + Replay Warm-up + L2) 
+ 3 Seeds 
+ 【主方法 · 检验 H4】 零参数污染 + 对称 W₀ 改写防 Shortcut + Demo 自标定 Δr_canon 早停
+ 最高 (~63–65%) 
+ 极低 (~−2.5% · TOST 等价于 Row 8) 
+ 最高 (~82%) 
+ ~72h 
+ 8. Oracle-Guided GRPO (Upper Bound) 
+ 3 Seeds 
+ 训练期直接使用 L3 确定性程序验证器给奖励（理想上限参照，用于與 Row 7 做 TOST 比较） 
+ ~66% 
+ ~−2.0% 
+ 100% (Oracle) 
+ ~45h 
+ 🧮 真实 RL 算力账修正（~64–80 GPU·hrs/run · 总计 ~1,150 H800·hrs ≈ 8卡 6 天）
+ 修正原方案对 7B GRPO (G=8, 1–1.5k tokens + GenRM 192 tokens) 的低估：在 8×H800 上每阶段封顶 350 步约需 2.2 小时墙钟（4 阶段约 9 小时墙钟 = 72 H800·hrs/run ）。采用聚焦型 Seed 预算：
+ • Qwen2.5-7B-Instruct 核心 4 行（Row 3 / 5 / 7 / 8）× 3 Seeds： 9×72 + 3×45 ≈ 783 GPU·hrs （提供严格均值±SD与 TOST 检验）；
+ • Qwen2.5-7B-Instruct 辅助 4 行（Row 1 / 2 / 4 / 6）× 1 Seed： 20+25+95+76 = 216 GPU·hrs （方差参考核心行）；
+ • Llama-3.1-8B-Instruct 跨家族去伪影复现（Row 3 vs. Row 5 vs. Row 7 × 1 Seed 完整 4 阶段）： ≈ 250 GPU·hrs （排除 Shao et al. 2025 Qwen 伪奖励质疑）。
+ 🧭 Figure 3 & Figure 4 核心分析图定稿
+ • Figure 3（Fisher 连续谱 & 三项 AUROC + 跨阶段 TOST）： (a) 掩码率 m ∈ [0%, 100%] 帕累托曲线（H3）；(b) 对称 W₀ 改写后的 Correctness (>0.80) vs. Style (≈0.50) vs. Rewrite-Invariance (≈0.50) AUROC；(c) 跨阶段 Replay 前后 θ_J^(t-1,end) vs. θ_J^(t,0) 的 TOST 等价带（H4）。
+ • Figure 4（Demo 自标定 Δr_canon 早停与 % Budget 窗口）： 展示 Δr_canon > μ_demo + 2σ_demo 触发时刻在 [−15%, +5%] budget 窗口内精准拦截格式迎合。
+ 立即执行清单（按死穴优先序排列）
+ 【Step 0 · 最高优先】实测单步吞吐 + 各阶段初始准确率 + 跑 Stage 1 → Stage 2 双重效应量预检门 在动手跑全表前，先实测 8×H800 单步耗时与 4 阶段起点准确率，并验证 Shared-LoRA 是否满足 FM < −4.0% 且 P_ext 上 ΔAcc_rank < −8.0% 。若调大 Rank (r=128) / LR， 所选超参对全部 8 行严格统一适用 ，并将默认 r=64 结果放入 Appendix；同时在 k=0 步用正例 Demo 自标定锁定 τ_canon^(t) = μ_demo + 2σ_demo 。
+ 【工程打通】编写 verl 的 GenRM LoRA 回调接口 + 正负例对称 W₀ 改写与 ≥5/8 共识门槛脚本 利用 vLLM 原生 LoRARequest 实现同一进程内 θ_A 生成与 θ_J （Greedy CoT ≤ 192 tokens + Yes/No Logits）打分；完成路线 A 正负例 1:1 对称 W₀ 改写脚本（确保 Rewrite-Invariance AUROC ≈ 0.50 ）与路线 B 的 ≥ 5/8 共识门槛过滤。
+ 【Pilot 实验】运行 Group A/B/C/D（检验 H2 共同 KL 交集斜率、Group C 剥离纯格式迎合、H3 Fisher 掩码连续谱） 在共同覆盖的 [0, d_KL^(min-max)] 区间内对比 Group B 斜率；画出 m ∈ {0%, 25%, 50%, 75%, 90%, 100%} 的因果干预帕累托曲线；移除 Group C 恒等式伪 TOST，将 TOST 严格部署于跨阶段 Replay Warm-up（ θ_J^(t-1,end) vs. θ_J^(t,0) ）。
+ 【主实验（~1,150 GPU·hrs）】跑满 Qwen2.5-7B（核心 4 行×3 Seeds + 辅助 4 行×1 Seed）+ Llama-3.1-8B（核心 3 行×1 Seed） 重点盯防 SDFT-Only （证明 RL 必要性）与 Judge Co-Training （对比准确度与每步双 Backward 算力成本），并用 TOST 检验 Ours（Row 7）与 Oracle Upper Bound（Row 8）在遗忘率 FM 上的逼近程度（H4）。
+ 【Ablation 消融】对比 Replay Warm-up（默认）vs. Growing-Rank SVD Merge vs. Per-stage Judge Expert 汇报截断 SVD 的保留谱能量比例，并用跨阶段 TOST 等价检验实证历史对比对 Replay 的无损保持能力。
+ 核心引用文献（已修正机构归属并补齐必引谱系）
+ RFT Naturally Mitigates Forgetting in CPT 
+ Lai et al. · HKISI/CAS · arXiv 2507.05386
+ 直接基石：确立有完美外部 Oracle 时 GRPO 抗遗忘优于 SFT。
+ Phasic Policy Gradient (PPG) 
+ Cobbe et al. · OpenAI · ICML 2021
+ 必引前身：深度 RL 中解耦共享 trunk 策略与价值干扰的经典谱系。
+ Self-Distillation Enables Continual Learning (SDFT) 
+ Shenfeld et al. · MIT · ICML 2026 Spotlight
+ 关键对照基线（SDFT-Only）：检验仅靠 150 条 Demo 不做 RL 是否足够。
+ WARM: Weight Averaged Reward Models 
+ Ramé et al. · Google DeepMind · ICML 2024
+ 必引前身：权重平均 RM 缓解 reward hacking 的基线对照。
+ LoRA Learns Less and Forgets Less 
+ Biderman et al. · Databricks / MIT · TMLR 2024
+ 实验设计依据：解释为何严禁 Full-FT 对比 LoRA，并设立 Step 0 效应门。
+ Scaling Laws for Reward Model Overoptimization 
+ Gao, Schulman, Hilton · OpenAI · ICML 2023
+ 已修正机构为 OpenAI：Proxy-gold gap 随 KL 增大的经典对照框架。
+ LLM Evaluators Recognize and Favor Their Own Generations 
+ Panickssery et al. · NeurIPS 2024
+ 机制依据：支撑 L2 自偏好率 ρ_over 与格式迎合诊断。
+ Meta-Rewarding Language Models 
+ Wu et al. · Meta · arXiv 2024
+ 核心对手基线（Row 5）：Actor 与 Judge 同步共训练范式。
+ Spurious Rewards: Rethinking Training Signals in RLVR 
+ Shao et al. · 2025
+ 方法学防线：揭示 Qwen2.5 数学伪奖励现象，驱动本文引入 Llama-3.1-8B 复现。

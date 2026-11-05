@@ -1,0 +1,48 @@
+# Row 8 — the paper's minimal structural repair (main method)
+method: dual_adapter_replay
+reward_source: self
+stages_to_run: [1, 2, 3, 4]
+confirmatory: false
+seed: 0
+
+model:
+  backend: toy
+  r_shared: 0
+  r_actor: 64
+  r_judge: 64
+  lora_alpha: 128
+
+train:
+  group_size: 8
+  max_steps_per_stage: 300
+  lr: 1.0e-5
+  adv_eps: 1.0e-4
+  degenerate_zero: false
+  degenerate_tau: 0.05
+  replay_ratio: 1.0
+
+judge:
+  temperature: 0.0
+  max_cot_tokens: 192
+  mode: greedy_cot_logit
+  ensemble_k: 1
+
+data:
+  stages: [logic, code, math, instruction]
+  demo_per_stage: 150
+  n_prompts_per_stage: 400
+  ext_prompts: 200
+  audit_prompts: 200
+  audit_pairs_per_prompt: 4
+  audit_heldout_stages: [math, instruction]
+
+exp:
+  e1_seeds: 3
+  e1_confirm_pair: [2, 3]
+  e2_checkpoints: [50, 150, 300]
+  e2_protocol_b_k: [20, 50]
+  delta_sesoi_pt: 2.0
+  delta_ni_pt: 2.5
+  dt_lead_steps: 50
+  matched_fpr: 0.05
+  bootstrap_resamples: 2000

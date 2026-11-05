@@ -1,0 +1,153 @@
+{"seq": 1, "ts": 1793597919.757741, "level": "L1", "role": "method_warmup", "purpose": "judge warm-up", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 2, "ts": 1793597919.8229635, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 3, "ts": 1793597919.8257816, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 4, "ts": 1793597919.8441978, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 5, "ts": 1793597919.8465502, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 6, "ts": 1793597919.8489118, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 7, "ts": 1793597919.8512383, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 8, "ts": 1793597919.853563, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 9, "ts": 1793597919.8559122, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 10, "ts": 1793597919.858226, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 11, "ts": 1793597919.8605683, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 12, "ts": 1793597919.8629005, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 13, "ts": 1793597919.8652647, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 14, "ts": 1793597919.867586, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 15, "ts": 1793597919.8699632, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 16, "ts": 1793597919.8723302, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 17, "ts": 1793597919.874715, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 18, "ts": 1793597919.8771005, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 19, "ts": 1793597919.8794408, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 20, "ts": 1793597919.881828, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 21, "ts": 1793597919.8842123, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 22, "ts": 1793597919.886838, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 23, "ts": 1793597919.8891852, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 24, "ts": 1793597919.9435215, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 25, "ts": 1793597919.9459484, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 26, "ts": 1793597919.9482887, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 27, "ts": 1793597919.9506874, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 28, "ts": 1793597919.9530735, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 29, "ts": 1793597919.9554489, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 30, "ts": 1793597919.9578254, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 31, "ts": 1793597919.9601924, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 32, "ts": 1793597919.962538, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 33, "ts": 1793597919.9649036, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 34, "ts": 1793597919.9672713, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 35, "ts": 1793597919.9697888, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 36, "ts": 1793597919.9721742, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 37, "ts": 1793597919.9745314, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 38, "ts": 1793597919.9769142, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 39, "ts": 1793597919.9792523, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 40, "ts": 1793597919.9816344, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 41, "ts": 1793597919.9840076, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 42, "ts": 1793597919.9863796, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 43, "ts": 1793597920.0450532, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 44, "ts": 1793597920.047491, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 45, "ts": 1793597920.049905, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 46, "ts": 1793597920.0522966, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 47, "ts": 1793597920.0546668, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 48, "ts": 1793597920.0570548, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 49, "ts": 1793597920.059474, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 50, "ts": 1793597920.0618796, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 51, "ts": 1793597920.0642805, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 52, "ts": 1793597920.067471, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 53, "ts": 1793597920.0680778, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 54, "ts": 1793597920.068603, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 55, "ts": 1793597920.0690951, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 56, "ts": 1793597920.0695822, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 57, "ts": 1793597920.0700812, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 58, "ts": 1793597920.0705602, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 59, "ts": 1793597920.0710258, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 60, "ts": 1793597920.0715072, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 61, "ts": 1793597920.0719988, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 62, "ts": 1793597920.0724952, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 63, "ts": 1793597920.0729764, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 64, "ts": 1793597920.0734494, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 65, "ts": 1793597920.0739117, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 66, "ts": 1793597920.074389, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 67, "ts": 1793597920.0748644, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 68, "ts": 1793597920.0763967, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 69, "ts": 1793597920.0804286, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 70, "ts": 1793597920.0830476, "level": "L3", "role": "e2_diagnostic_gold_arm", "purpose": "gold reward arm:protocolA:gold", "in_training_scope": true, "granted": true, "detail": "gold-control training scope"}
+{"seq": 71, "ts": 1793597920.0835412, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 72, "ts": 1793597920.0868955, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 73, "ts": 1793597920.1472995, "level": "L1", "role": "method_warmup", "purpose": "judge warm-up", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 74, "ts": 1793597920.1831832, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 75, "ts": 1793597920.1839855, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 76, "ts": 1793597920.1851907, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 77, "ts": 1793597920.187213, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 78, "ts": 1793597920.187948, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 79, "ts": 1793597920.1889877, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 80, "ts": 1793597920.1909778, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 81, "ts": 1793597920.243729, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 82, "ts": 1793597920.2447925, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 83, "ts": 1793597920.2467816, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 84, "ts": 1793597920.2475157, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 85, "ts": 1793597920.2485547, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 86, "ts": 1793597920.2505476, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 87, "ts": 1793597920.2512612, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 88, "ts": 1793597920.2523274, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 89, "ts": 1793597920.2543004, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 90, "ts": 1793597920.2550151, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 91, "ts": 1793597920.256049, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 92, "ts": 1793597920.2580252, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 93, "ts": 1793597920.2587306, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 94, "ts": 1793597920.2600229, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 95, "ts": 1793597920.2620118, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 96, "ts": 1793597920.262711, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 97, "ts": 1793597920.2638547, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 98, "ts": 1793597920.265884, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 99, "ts": 1793597920.266591, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 100, "ts": 1793597920.2677321, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 101, "ts": 1793597920.269714, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 102, "ts": 1793597920.2704186, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 103, "ts": 1793597920.2715335, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 104, "ts": 1793597920.2735176, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 105, "ts": 1793597920.2742383, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 106, "ts": 1793597920.2753437, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 107, "ts": 1793597920.2773716, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 108, "ts": 1793597920.278108, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 109, "ts": 1793597920.2792253, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 110, "ts": 1793597920.2812436, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 111, "ts": 1793597920.2819462, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 112, "ts": 1793597920.2826686, "level": "L3", "role": "e2_diagnostic_gold_arm", "purpose": "gold reward arm:step0", "in_training_scope": true, "granted": true, "detail": "gold-control training scope"}
+{"seq": 113, "ts": 1793597920.2830544, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 114, "ts": 1793597920.285072, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 115, "ts": 1793597920.2857795, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 116, "ts": 1793597920.2863054, "level": "L3", "role": "e2_diagnostic_gold_arm", "purpose": "gold reward arm:step1", "in_training_scope": true, "granted": true, "detail": "gold-control training scope"}
+{"seq": 117, "ts": 1793597920.2867198, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 118, "ts": 1793597920.3447447, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 119, "ts": 1793597920.3454537, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 120, "ts": 1793597920.3459857, "level": "L3", "role": "e2_diagnostic_gold_arm", "purpose": "gold reward arm:step2", "in_training_scope": true, "granted": true, "detail": "gold-control training scope"}
+{"seq": 121, "ts": 1793597920.3464093, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 122, "ts": 1793597920.348393, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 123, "ts": 1793597920.349094, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 124, "ts": 1793597920.3496144, "level": "L3", "role": "e2_diagnostic_gold_arm", "purpose": "gold reward arm:step3", "in_training_scope": true, "granted": true, "detail": "gold-control training scope"}
+{"seq": 125, "ts": 1793597920.3500326, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 126, "ts": 1793597920.3520343, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 127, "ts": 1793597920.352739, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 128, "ts": 1793597920.353274, "level": "L3", "role": "e2_diagnostic_gold_arm", "purpose": "gold reward arm:step4", "in_training_scope": true, "granted": true, "detail": "gold-control training scope"}
+{"seq": 129, "ts": 1793597920.353703, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 130, "ts": 1793597920.355689, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 131, "ts": 1793597920.3564038, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 132, "ts": 1793597920.3569329, "level": "L3", "role": "e2_diagnostic_gold_arm", "purpose": "gold reward arm:step5", "in_training_scope": true, "granted": true, "detail": "gold-control training scope"}
+{"seq": 133, "ts": 1793597920.3573525, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 134, "ts": 1793597920.359335, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 135, "ts": 1793597920.3600633, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 136, "ts": 1793597920.3612206, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 137, "ts": 1793597920.363238, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 138, "ts": 1793597920.3639739, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 139, "ts": 1793597920.3650122, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 140, "ts": 1793597920.3670027, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 141, "ts": 1793597920.3677287, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 142, "ts": 1793597920.3687575, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 143, "ts": 1793597920.370739, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 144, "ts": 1793597920.3714569, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 145, "ts": 1793597920.3724988, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 146, "ts": 1793597920.3744686, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 147, "ts": 1793597920.37517, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 148, "ts": 1793597920.3762028, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 149, "ts": 1793597920.3781927, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 150, "ts": 1793597920.3789175, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 151, "ts": 1793597920.3799567, "level": "L2", "role": "method_train", "purpose": "grpo step", "in_training_scope": true, "granted": true, "detail": ""}
+{"seq": 152, "ts": 1793597920.3819375, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage2", "in_training_scope": false, "granted": true, "detail": ""}
+{"seq": 153, "ts": 1793597920.3826501, "level": "L3", "role": "audit_reporting", "purpose": "audit line @stage1", "in_training_scope": false, "granted": true, "detail": ""}

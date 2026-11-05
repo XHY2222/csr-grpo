@@ -1,0 +1,19 @@
+# Row 5a — RLER-faithful: M=2 generation sub-policies, matched rollout budget
+method: rler_faithful
+reward_source: self
+stages_to_run: [1, 2, 3, 4]
+seed: 0
+model:
+  backend: toy
+  r_shared: 0
+  r_actor: 64
+  r_judge: 64
+  lora_alpha: 128
+train:
+  group_size: 8        # -> 4 rollouts per sub-policy
+  lr: 1.0e-5
+judge:
+  temperature: 0.0
+  ensemble_k: 1
+data:
+  audit_prompts: 200

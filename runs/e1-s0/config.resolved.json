@@ -1,0 +1,124 @@
+{
+  "model": {
+    "backend": "toy",
+    "name": "toy-7b",
+    "dtype": "bfloat16",
+    "r_shared": 0,
+    "r_actor": 64,
+    "r_judge": 64,
+    "lora_alpha": 64,
+    "lora_dropout": 0.0,
+    "target_modules": [
+      "q_proj",
+      "v_proj"
+    ]
+  },
+  "train": {
+    "group_size": 8,
+    "max_steps_per_stage": 300,
+    "lr": 1e-05,
+    "adam_beta1": 0.9,
+    "adam_beta2": 0.999,
+    "adam_eps": 1e-08,
+    "grad_clip": 1.0,
+    "adv_eps": 0.0001,
+    "kl_coef": 0.001,
+    "ref_kl_clip": null,
+    "seed": 0,
+    "device": "cpu",
+    "warmup_lr": 0.003,
+    "warmup_rounds": 60,
+    "adv_mode": "grpo",
+    "degenerate_zero": false,
+    "degenerate_tau": 0.05,
+    "replay_ratio": 1.0,
+    "replay_window_stages": null
+  },
+  "judge": {
+    "temperature": 0.0,
+    "max_cot_tokens": 192,
+    "mode": "greedy_cot_logit",
+    "ema_tau": null,
+    "ensemble_k": 1,
+    "atomic_rubric": false
+  },
+  "data": {
+    "stages": [
+      "logic",
+      "code",
+      "math",
+      "instruction"
+    ],
+    "demo_per_stage": 150,
+    "n_prompts_per_stage": 128,
+    "ext_prompts": 200,
+    "ext_pairs_per_prompt": 4,
+    "audit_prompts": 64,
+    "audit_pairs_per_prompt": 4,
+    "audit_heldout_stages": [
+      "math"
+    ],
+    "consensus_quorum": [
+      5,
+      8
+    ],
+    "route_a_abstain": true,
+    "soft_label_for_ambiguous": 0.5
+  },
+  "exp": {
+    "e1_continue_steps": null,
+    "e1_seeds": 1,
+    "e1_gold_control_seeds": 1,
+    "e1_confirm_pair": [
+      2,
+      3
+    ],
+    "e1_confirm_seeds": 2,
+    "e2_checkpoints": [
+      50,
+      150,
+      300
+    ],
+    "e2_protocol_b_k": [
+      20,
+      50
+    ],
+    "e2_arms": [
+      "self",
+      "protected",
+      "gold",
+      "degenerate_zeroed"
+    ],
+    "e3_arms": [
+      "dual_adapter",
+      "dual_adapter_replay",
+      "rler_faithful",
+      "judge_lora_ensemble"
+    ],
+    "delta_sesoi_pt": 2.0,
+    "delta_ni_pt": 2.5,
+    "dt_lead_steps": 50,
+    "matched_fpr": 0.05,
+    "bootstrap_resamples": 500,
+    "bootstrap_cluster": "prompt",
+    "ci_level": 0.95
+  },
+  "runtime": {
+    "out_dir": "runs",
+    "log_every": 10,
+    "save_snapshots": true,
+    "deterministic": true,
+    "num_threads": 4,
+    "ledger_strict": true
+  },
+  "method": "dual_adapter",
+  "reward_source": "self",
+  "stages_to_run": [
+    1,
+    2
+  ],
+  "is_reference": false,
+  "is_diagnostic_arm": false,
+  "confirmatory": false,
+  "seed": 0
+}

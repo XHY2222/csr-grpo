@@ -1,0 +1,84 @@
+{
+  "e1": {
+    "metric": "sign_agree",
+    "line": "P_audit",
+    "delta_switch_self": {
+      "point": -0.04409090909090907,
+      "lo": -0.16908482142857137,
+      "hi": 0.08036854358678953,
+      "level": 0.95
+    },
+    "delta_switch_gold": {
+      "point": 0.07986111111111116,
+      "lo": -0.07617861562577344,
+      "hi": 0.23977083333333302,
+      "level": 0.95
+    },
+    "delta_did": {
+      "point": -0.12395202020202023,
+      "lo": -0.30414167521075414,
+      "hi": 0.061499560871114176,
+      "level": 0.95
+    },
+    "decision_switch": "inconclusive",
+    "decision_did": "inconclusive",
+    "arms": [
+      {
+        "arm": "self@2",
+        "reward": "self",
+        "stage": 2,
+        "P_audit.acc_rank": 0.7383809523809524,
+        "P_audit.sign_agree": 0.735,
+        "P_audit.rho_adv": 0.6465473841593555,
+        "P_audit.pseudo_contrast": 0.9230769230769231,
+        "P_audit.sigma_judge_degenerate": 0.07235055281173206,
+        "P_audit.valid_pair_coverage": 0.390625,
+        "P_audit.degenerate_share": 0.609375,
+        "P_on-policy.acc_rank": 0.719047619047619,
+        "P_on-policy.sign_agree": 0.7083333333333334,
+        "P_on-policy.rho_adv": 0.7742121145290882,
+        "P_on-policy.pseudo_contrast": 0.9130434782608695,
+        "P_on-policy.sigma_judge_degenerate": 0.0627813722900494,
+        "P_on-policy.valid_pair_coverage": 0.28125,
+        "P_on-policy.degenerate_share": 0.71875
+      },
+      {
+        "arm": "self@1",
+        "reward": "self",
+        "stage": 1,
+        "P_audit.acc_rank": 0.8051948051948052,
+        "P_audit.sign_agree": 0.7897727272727273,
+        "P_audit.rho_adv": 0.8434108151054214,
+        "P_audit.pseudo_contrast": 1.0,
+        "P_audit.sigma_judge_degenerate": 0.08860068922834437,
+        "P_audit.valid_pair_coverage": 0.34375,
+        "P_audit.degenerate_share": 0.65625,
+        "P_on-policy.acc_rank": 0.8348214285714286,
+        "P_on-policy.sign_agree": 0.7734375,
+        "P_on-policy.rho_adv": 0.69332256622943,
+        "P_on-policy.pseudo_contrast": 1.0,
+        "P_on-policy.sigma_judge_degenerate": 0.09720573620528447,
+        "P_on-policy.valid_pair_coverage": 0.5,
+        "P_on-policy.degenerate_share": 0.5
+      }
+    ]
+  },
+  "supervision": {
+    "run_id": "51c5d1461a38",
+    "gold_calls_in_training": 0,
+    "gold_calls_in_gold_control": 40,
+    "violations": 0,
+    "allowed_by_level": {
+      "L1": 8,
+      "L2": 80,
+      "L3": 52
+    },
+    "allowed_by_role": {
+      "method_warmup": 8,
+      "method_train": 80,
+      "audit_reporting": 12,
+      "e2_diagnostic_gold_arm": 40
+    },
+    "total_requests": 140
+  }
+}

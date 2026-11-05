@@ -1,0 +1,20 @@
+# Row 3 — shared adapter baseline (cross-role parameter contamination possible)
+method: shared_grpo
+reward_source: self
+stages_to_run: [1, 2, 3, 4]
+seed: 0
+model:
+  backend: toy
+  r_shared: 32
+  r_actor: 32
+  r_judge: 32
+  lora_alpha: 64
+train:
+  group_size: 8
+  lr: 1.0e-5
+  degenerate_tau: 0.05
+judge:
+  temperature: 0.0
+data:
+  n_prompts_per_stage: 400
+  audit_prompts: 200
